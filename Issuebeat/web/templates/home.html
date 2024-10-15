@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>홈 화면</title>
+    <style>
+        body { text-align: center; margin-top: 50px; }
+        input { width: 300px; height: 40px; font-size: 18px; }
+        button { height: 40px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <img src="{% static 'logo.png' %}" alt="logo">
+    
+    <form action="" method="get" onsubmit="this.action='/' + this.q.value + '/result/';">
+        <input type="text" name="q" placeholder="검색어를 입력하세요" required>
+        <button type="submit">검색</button>
+    </form>
+</body>
+</html>
