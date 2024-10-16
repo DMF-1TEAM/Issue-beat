@@ -22,7 +22,7 @@ def resultsam(request):
     context={
         'news': news,
     }
-    return render(request, 'resultsam.html')
+    return render(request, 'resultsam.html', context)
 
 def news(request):
     news= News.objects.all()
