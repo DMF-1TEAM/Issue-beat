@@ -17,17 +17,13 @@ def result(request, query):
     return render(request, 'web/result.html', {'articles': articles, 'query': query})
 
 def resultsam(request):
-    news= News.objects.all()
+    news= News.objects.all().order_by('-date')[:10]
 
     context={
         'news': news,
     }
-    return render(request, 'resultsam.html', context)
+    return render(request, 'resultsam.html')
 
 def news(request):
-    news= News.objects.all()
-
-    context={
-        'news': news,
-    }
-    return render(request, 'news.html', context)
+    news = News.objects.all().order_by('-date')  # 최신 뉴스 먼저 보기
+    return render(request, 'news.html', {'news': news})

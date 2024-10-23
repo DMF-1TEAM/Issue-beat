@@ -21,13 +21,10 @@
             padding: 10px 20px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-
-        nav a {
-            margin: 0 15px;
-            color: #333;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 16px;
+        
+        .left-menu {
+            display: flex;
+            margin-left: 10%;
         }
 
         .circle {
@@ -40,7 +37,6 @@
             background: #4CAF50;
             color: white;
             font-weight: bold;
-            margin: 0 10px;
             text-align: center;
         }
 
@@ -135,10 +131,23 @@
             width: 20px;
             height: 20px;
         }
+
+        .title-and-circles {
+            display: flex;
+            align-items: center; 
+            justify-content: flex-start; 
+        }
+
+        .circle-container {
+            display: flex;
+            gap: 10px; 
+            margin-left: 20px; 
+        }
     </style>
 </head>
 <body>
 {% load static %}
+
 <nav>
     <div class="right-icons">
         <img src="{% static 'Search.png' %}" alt="검색아이콘">
@@ -147,17 +156,24 @@
 </nav>
 
 <div class="left-menu">
-    <h1>이슈 키워드</h1>
-    <div class="circle">
-        <span>카테고리</span>
-    </div>
-    <div class="circle">
-        <span>연관 키워드</span>
+    <div class="title-and-circles">
+        <h1>이슈 키워드</h1>
+        <div class="circle-container">
+            <div class="circle">
+                <span>카테고리</span>
+            </div>
+            <div class="circle">
+                <span>연관 키워드</span>
+            </div>
+        </div>
     </div>
 </div>
 
 <section class="section">
-    <h2>이슈 심박수 확인</h2>
+    <h2>
+        <img src="{% static 'Beat.png' %}" alt="심박수확인">
+        이슈 심박수 확인
+    </h2>
     <p>연도별 / 월별 / 일별 기사 수를 확인할 수 있는 차트</p>
     <div class="chart">
         <p>여기에 막대차트 또는 라인차트 표시</p>
@@ -165,7 +181,10 @@
 </section>
 
 <section class="section">
-    <h2>세부 탐색</h2>
+    <h2>
+        <img src="{% static 'Eye.png' %}" alt="세부탐색">
+        세부 탐색
+    </h2>
     <div class="container">
         <div class="chart">
             <h3>타임라인 차트</h3>
@@ -183,22 +202,24 @@
                 <thead>
                     <tr>
                         <th>날짜</th>
-                        <th>기사 제목</th>
+                        <th>제목</th>
+                        <th>본문</th>
+                        <th>언론사</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>2024-10-15</td>
-                        <td>기사 제목 1</td>
-                    </tr>
-                    <tr>
-                        <td>2024-10-14</td>
-                        <td>기사 제목 2</td>
-                    </tr>
-                    <tr>
-                        <td>2024-10-13</td>
-                        <td>기사 제목 3</td>
-                    </tr>
+                    {% for item in news %}
+                        <tr>
+                            <td>{{ item.date }}</td>
+                            <td>{{ item.title }}</td>
+                            <td>{{ item.content }}</td>
+                            <td>{{ item.press }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4">뉴스 기사가 없습니다.</td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
             
@@ -210,6 +231,3 @@
         </div>
     </div>
 </section>
-
-</body>
-</html>

@@ -1,6 +1,5 @@
 from django.db import models
 
-# Create your models here.
 class News(models.Model):
     date = models.DateField()
     title = models.CharField(max_length=50)
