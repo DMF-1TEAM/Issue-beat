@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>심박수</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <h1>심박수</h1>
@@ -17,51 +18,49 @@
     <button id="filterButton">적용</button>
 
     <canvas id="dataCountChart"></canvas>
-    
+        
     <script>
-        document.getElementById('filterButton').addEventListener('click', function() {
-            const group = document.getElementById('group').value;
-            const url = `/news-chart/?group=${group}`;
+        document.addEventListener('DOMContentLoaded', function () {
+            const ctx = document.getElementById('dataCountChart').getContext('2d'); 
+            
+            const dateLabels = {{date_labels|safe}}
+            const dataCounts = {{data_counts|safe}}
 
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    const ctx = document.getElementById('dataCountChart').getContext('2d');
-                    const dataCountChart = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: data.date_labels,
-                            datasets: [{
-                                label: '뉴스 데이터 수',
-                                data: data.data_counts,
-                                borderColor: 'rgb(255, 99, 132)',
-                                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                                fill: true,
-                                tension: 0.5
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            scales: {
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: group === '1month' ? '월' : group === '1year' ? '년' : '날짜'
-                                    }
-                                },
-                                y: {
-                                    title: {
-                                        display: true,
-                                        text: '데이터 수'
-                                    },
-                                    beginAtZero: true
-                                }
+            const dataCountChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dateLabels,
+                    datasets: [{
+                        label: '뉴스 데이터 수',
+                        data: dataCounts,
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        fill: true,
+                        tension: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '날짜'
                             }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '데이터 수'
+                            },
+                            beginAtZero: true
                         }
-                    });
-                });
+                    }
+                }});
         });
+
     </script>
-    <script type="text/javascript" src="/static/js/chart.js"></script>
+
+
 </body>
 </html>

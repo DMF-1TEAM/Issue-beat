@@ -40,6 +40,7 @@ def news_chart(request):
                       .values('date')
                       .annotate(count=Count('id'))
                       .order_by('date'))
+        print(news_data)
     elif group_by == '1week':
         news_data = (News.objects
                       .extra(select={'week': "strftime('%Y-%m-%d', date, 'weekday 0', '-6 days')"})
