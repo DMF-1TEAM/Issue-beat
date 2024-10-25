@@ -20,12 +20,12 @@ def result(request, query):
     return render(request, 'web/result.html', {'articles': articles, 'query': query})
 
 def resultsam(request):
-    news= News.objects.all().order_by('-date')[:10]
+    news = News.objects.all().order_by('-date')
 
     context={
         'news': news,
     }
-    return render(request, 'resultsam.html')
+    return render(request, 'resultsam.html', context)
 
 def news(request):
     news = News.objects.all().order_by('-date')  # 최신 뉴스 먼저 보기

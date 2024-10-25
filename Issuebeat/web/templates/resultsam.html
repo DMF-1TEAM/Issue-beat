@@ -187,7 +187,7 @@
     </h2>
     <div class="container">
         <div class="chart">
-            <h3>타임라인 차트</h3>
+            <h3>3단계 타임라인</h3>
             <p>주요 시점 추출 · 요약</p>
             <div style="height: 300px; display: flex; justify-content: center; align-items: center;">
                 <p>타임라인 차트 영역</p>
@@ -196,38 +196,32 @@
 
         <div class="news">
             <h3>뉴스 모아보기</h3>
-            <p>주요 시점 클릭 시 해당 기사 아카이빙</p>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>날짜</th>
-                        <th>제목</th>
-                        <th>본문</th>
-                        <th>언론사</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in news %}
+            <p>심박수 내 시점 클릭 시 해당일 기사 아카이빙</p>
+
+            <section class="section">
+                <table>
+                    <thead>
                         <tr>
-                            <td>{{ item.date }}</td>
-                            <td>{{ item.title }}</td>
-                            <td>{{ item.content }}</td>
-                            <td>{{ item.press }}</td>
+                            <th>날짜</th>
+                            <th>제목</th>
+                            <th>언론사</th>
                         </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="4">뉴스 기사가 없습니다.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            
-            <div class="more">
-                <a href="{% url 'news' %}">
-                    <button>더보기</button>
-                </a>
-            </div>
+                    </thead>
+                    <tbody>
+                        {% for item in news %}
+                            <tr>
+                                <td>{{ item.date }}</td>
+                                <td><a href="{{ item.link }}" target="_blank">{{item.title}}</a></td>
+                                <td>{{ item.press }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="3">뉴스 기사가 없습니다.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
         </div>
     </div>
 </section>
