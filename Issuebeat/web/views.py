@@ -4,6 +4,9 @@ from .models import News
 from django.db.models import Count
 from datetime import date, timedelta
 import json
+from django.core.paginator import Paginator
+from rest_framework.pagination import PageNumberPagination
+from .pagination import PaginationHandlerMixin
 
 def home(request):
     return render(request, 'home.html')
@@ -19,18 +22,31 @@ def result(request, query):
 
     return render(request, 'web/result.html', {'articles': articles, 'query': query})
 
+class NewsPagination(PageNumberPagination):
+    page_size = 10  # 페이지 당 10개의 항목
+    page_size_query_param = 'page_size'
+    max_page_size = 100  # 최대 100개로 설정 (필요에 따라 변경 가능)
+
+class NewsListView(PaginationHandlerMixin):
+    pagination_class = NewsPagination
+
 def resultsam(request):
     news = News.objects.all().order_by('-date')
 
+    # 페이지네이터: 한 페이지에 10개의 뉴스 기사 표시
+    paginator = Paginator(news, 10)  # 한 페이지에 10개씩 자름
+    page_number = request.GET.get('page')  # URL에서 ?page= 값 가져옴
+    page_obj = paginator.get_page(page_number)  # 해당 페이지의 뉴스 데이터 가져옴
+
     context={
         'news': news,
+        'page_obj': page_obj,
     }
     return render(request, 'resultsam.html', context)
 
 def news(request):
     news = News.objects.all().order_by('-date')  # 최신 뉴스 먼저 보기
     return render(request, 'news.html', {'news': news})
-
 
 def news_chart(request):
     group_by = request.GET.get('group', '1day')  # 기본값은 1일로?
@@ -79,4 +95,3 @@ def news_chart(request):
         'data_counts': json.dumps(data_counts),
     }
     return render(request, 'chart.html', context)
-
