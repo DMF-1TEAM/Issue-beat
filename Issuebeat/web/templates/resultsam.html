@@ -114,6 +114,18 @@
             background-color: #f9f9f9;
         }
 
+        tbody {
+            display: block;  /* 블록 레벨 요소로 변경 */
+            max-height: 400px;  /* 원하는 높이로 설정 */
+            overflow-y: auto;  /* 세로 스크롤 활성화 */
+        }
+
+        thead, tbody tr {
+            display: table;  /* 원래의 테이블 레이아웃을 유지하기 위해 다시 설정 */
+            width: 100%;
+            table-layout: fixed;  /* 고정 레이아웃 */
+        }
+
         .more {
             text-align: right;
             margin-top: 20px;
@@ -203,9 +215,9 @@
             </div>
         </div>
 
-        <div class="news">
-            <h3>뉴스 모아보기</h3>
-            <p>심박수 내 시점 클릭 시 해당일 기사 아카이빙</p>
+    <div class="news">
+        <h3>뉴스 모아보기</h3>
+        <p>심박수 내 시점 클릭 시 해당일 기사 아카이빙</p>
 
             <section class="section">
                 <table>
@@ -231,7 +243,7 @@
                     </tbody>
                 </table>
             </section>
-        </div>
+    </div>
 
         <!-- 무한 스크롤 로직 추가 -->
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -239,9 +251,9 @@
             let page = 1;
             let loading = false;
 
-            $(window).scroll(function() {
-                // 페이지 끝에 도달했을 때 무한 스크롤 동작
-                if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+            $('table tbody').scroll(function() {
+                // 테이블의 tbody의 스크롤이 끝에 도달했을 때 무한 스크롤 동작
+                if ($('table tbody').scrollTop() + $('table tbody').innerHeight() >= $('table tbody')[0].scrollHeight - 50) {
                     if (!loading) {
                         loading = true;  // 중복 요청 방지
                         page += 1;
@@ -250,7 +262,7 @@
                             type: 'get',
                             success: function(data) {
                                 // 새로운 데이터를 현재 테이블의 tbody에 추가
-                                $('.section tbody').append($(data).find('.section tbody').html());
+                                $('table tbody').append($(data).find('table tbody').html());
                                 loading = false;
                             },
                             error: function() {

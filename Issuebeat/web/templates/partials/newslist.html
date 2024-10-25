@@ -1,0 +1,22 @@
+<table>
+    <thead>
+        <tr>
+            <th>날짜</th>
+            <th>제목</th>
+            <th>언론사</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in page_obj %}
+            <tr>
+                <td>{{ item.date }}</td>
+                <td><a href="{{ item.link }}" target="_blank">{{ item.title }}</a></td>
+                <td>{{ item.press }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="3">뉴스 기사가 없습니다.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

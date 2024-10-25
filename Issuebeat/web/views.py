@@ -4,6 +4,7 @@ from .models import News
 from django.db.models import Count
 from datetime import date, timedelta
 import json
+from django.http import JsonResponse
 from django.core.paginator import Paginator
 from rest_framework.pagination import PageNumberPagination
 from .pagination import PaginationHandlerMixin
@@ -32,13 +33,15 @@ class NewsListView(PaginationHandlerMixin):
 
 def resultsam(request):
     news = News.objects.all().order_by('-date')
+    paginator = Paginator(news, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
-    # 페이지네이터: 한 페이지에 10개의 뉴스 기사 표시
-    paginator = Paginator(news, 10)  # 한 페이지에 10개씩 자름
-    page_number = request.GET.get('page')  # URL에서 ?page= 값 가져옴
-    page_obj = paginator.get_page(page_number)  # 해당 페이지의 뉴스 데이터 가져옴
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        # AJAX 요청일 때 HTML을 반환
+        return render(request, 'partials/news_list.html', {'page_obj': page_obj})
 
-    context={
+    context = {
         'news': news,
         'page_obj': page_obj,
     }
