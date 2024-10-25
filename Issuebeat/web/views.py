@@ -23,6 +23,7 @@ def result(request, query):
 
     return render(request, 'web/result.html', {'articles': articles, 'query': query})
 
+
 class NewsPagination(PageNumberPagination):
     page_size = 10  # 페이지 당 10개의 항목
     page_size_query_param = 'page_size'
@@ -39,13 +40,13 @@ def resultsam(request):
 
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         # AJAX 요청일 때 HTML을 반환
-        return render(request, 'partials/news_list.html', {'page_obj': page_obj})
+        return render(request, 'partials/newslist.html', {'page_obj': page_obj})
 
     context = {
         'news': news,
-        'page_obj': page_obj,
     }
     return render(request, 'resultsam.html', context)
+
 
 def news(request):
     news = News.objects.all().order_by('-date')  # 최신 뉴스 먼저 보기

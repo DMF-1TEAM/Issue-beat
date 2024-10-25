@@ -101,15 +101,15 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            table-layout: auto; 
         }
 
-        table th, table td {
-            padding: 10px;
-            text-align: left;
-            border: 1px solid #ddd;
+        thead th, tbody td {
+            border: 1px solid #ddd; /* 셀 경계선 */
+            padding: 8px; /* 셀 패딩 */
+            text-align: left; /* 텍스트 왼쪽 정렬 */
+            overflow-wrap: break-word; /* 긴 단어 줄바꿈 */
         }
-
         table th {
             background-color: #f9f9f9;
         }
@@ -118,13 +118,15 @@
             display: block;  /* 블록 레벨 요소로 변경 */
             max-height: 400px;  /* 원하는 높이로 설정 */
             overflow-y: auto;  /* 세로 스크롤 활성화 */
+            overflow-x: hidden; /* 가로 스크롤 제거 */
         }
 
         thead, tbody tr {
-            display: table;  /* 원래의 테이블 레이아웃을 유지하기 위해 다시 설정 */
+            display: table;
             width: 100%;
             table-layout: fixed;  /* 고정 레이아웃 */
         }
+
 
         .more {
             text-align: right;
