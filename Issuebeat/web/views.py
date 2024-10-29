@@ -2,12 +2,11 @@ from django.shortcuts import render
 import requests
 from .models import News
 from django.db.models import Count
-from datetime import date, timedelta
 import json
-from django.http import JsonResponse
 from django.core.paginator import Paginator
 from rest_framework.pagination import PageNumberPagination
 from .pagination import PaginationHandlerMixin
+from django.http import JsonResponse
 
 def home(request):
     return render(request, 'home.html')
@@ -31,6 +30,39 @@ class NewsPagination(PageNumberPagination):
 
 class NewsListView(PaginationHandlerMixin):
     pagination_class = NewsPagination
+
+class NewsPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+def resultsam(request):
+    if request.is_ajax() and 'url' in request.GET:
+        # AJAX 요청 시 뉴스 내용 가져오기 로직
+        url = request.GET.get('url')
+        if not url:
+            return JsonResponse({'error': 'URL is required'}, status=400)
+
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            return JsonResponse({'content': response.text})
+        except requests.exceptions.RequestException as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    # 일반 요청: 뉴스 리스트와 페이지네이션 처리
+    news = News.objects.all().order_by('-date')
+    paginator = NewsPagination()
+    page = paginator.paginate_queryset(news, request)
+
+    if request.is_ajax():
+        # AJAX 요청일 때 부분 템플릿을 반환
+        return render(request, 'partials/newslist.html', {'page_obj': page})
+
+    context = {
+        'page_obj': page,
+    }
+    return render(request, 'resultsam.html', context)
 
 def resultsam(request):
     news = News.objects.all().order_by('-date')
