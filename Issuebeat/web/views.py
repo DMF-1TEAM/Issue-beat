@@ -7,6 +7,7 @@ from django.core.paginator import Paginator
 from rest_framework.pagination import PageNumberPagination
 from .pagination import PaginationHandlerMixin
 from django.http import JsonResponse
+from datetime import timedelta, datetime
 
 def home(request):
     return render(request, 'home.html')
@@ -85,46 +86,88 @@ def news(request):
     return render(request, 'news.html', {'news': news})
 
 def news_chart(request):
-    group_by = request.GET.get('group', '1day')  # 기본값은 1일로?
+    group_by = request.GET.get('group', '1day')  # 기본값은 1일
+    news_data = []
+    date_labels = []
+    data_counts = []
 
+    # 데이터가 존재하는 시작일과 종료일 가져오기
+    min_date = News.objects.earliest('date').date
+    max_date = News.objects.latest('date').date
+
+    # 그룹화 방식에 따른 날짜 범위 생성
     if group_by == '1day':
+        # 일 단위 그룹화
+        date_range = [min_date + timedelta(days=i) for i in range((max_date - min_date).days + 1)]
         news_data = (News.objects
                       .values('date')
                       .annotate(count=Count('id'))
                       .order_by('date'))
-        print(news_data)
+        news_data_dict = {entry['date']: entry['count'] for entry in news_data}
+        
+        for single_date in date_range:
+            date_labels.append(single_date.strftime('%Y-%m-%d'))
+            data_counts.append(news_data_dict.get(single_date, 0))
+    
     elif group_by == '1week':
+        # 주 단위 그룹화
+        date_range = []
+        current_date = min_date
+        while current_date <= max_date:
+            date_range.append(current_date)
+            current_date += timedelta(weeks=1)
+
         news_data = (News.objects
                       .extra(select={'week': "strftime('%Y-%m-%d', date, 'weekday 0', '-6 days')"})
                       .values('week')
                       .annotate(count=Count('id'))
                       .order_by('week'))
+        news_data_dict = {entry['week']: entry['count'] for entry in news_data}
+
+        for single_week in date_range:
+            week_str = single_week.strftime('%Y-%m-%d')
+            date_labels.append(week_str)
+            data_counts.append(news_data_dict.get(week_str, 0))
+
     elif group_by == '1month':
+        # 월 단위 그룹화
+        date_range = []
+        current_date = min_date.replace(day=1)
+        while current_date <= max_date:
+            date_range.append(current_date)
+            current_date = (current_date.replace(day=28) + timedelta(days=4)).replace(day=1)
+
         news_data = (News.objects
                       .extra(select={'month': "strftime('%Y-%m', date)"})
                       .values('month')
                       .annotate(count=Count('id'))
                       .order_by('month'))
+        news_data_dict = {entry['month']: entry['count'] for entry in news_data}
+
+        for single_month in date_range:
+            month_str = single_month.strftime('%Y-%m')
+            date_labels.append(month_str)
+            data_counts.append(news_data_dict.get(month_str, 0))
+
     elif group_by == '1year':
+        # 연 단위 그룹화
+        date_range = []
+        current_date = min_date.replace(month=1, day=1)
+        while current_date <= max_date:
+            date_range.append(current_date)
+            current_date = current_date.replace(year=current_date.year + 1)
+
         news_data = (News.objects
                       .extra(select={'year': "strftime('%Y', date)"})
                       .values('year')
                       .annotate(count=Count('id'))
                       .order_by('year'))
+        news_data_dict = {entry['year']: entry['count'] for entry in news_data}
 
-    date_labels = []
-    data_counts = []
-
-    for entry in news_data:
-        if group_by == '1day':
-            date_labels.append(entry['date'].strftime('%Y-%m-%d'))
-        elif group_by == '1week':
-            date_labels.append(entry['week'])
-        elif group_by == '1month':
-            date_labels.append(entry['month'])
-        elif group_by == '1year':
-            date_labels.append(entry['year'])
-        data_counts.append(entry['count'])
+        for single_year in date_range:
+            year_str = single_year.strftime('%Y')
+            date_labels.append(year_str)
+            data_counts.append(news_data_dict.get(year_str, 0))
 
     context = {
         'date_labels': json.dumps(date_labels),
