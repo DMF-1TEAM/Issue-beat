@@ -43,12 +43,14 @@ def resultsam(request):
     news = News.objects.all().order_by('-date')
     paginator = NewsPagination()
     page = paginator.paginate_queryset(news, request)
+    keyword = request.GET.get('q', '')
 
     if request.is_ajax():
         # AJAX 요청일 때 부분 템플릿을 반환
         return render(request, 'partials/newslist.html', {'page_obj': page})
 
     context = {
+        'keyword': keyword,
         'page_obj': page,
     }
     return render(request, 'resultsam.html', context)
@@ -58,12 +60,14 @@ def resultsam(request):
     paginator = Paginator(news, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    keyword = request.GET.get('q', '')
 
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         # AJAX 요청일 때 HTML을 반환
         return render(request, 'partials/newslist.html', {'page_obj': page_obj})
 
     context = {
+        'keyword': keyword,
         'news': news,
     }
     return render(request, 'resultsam.html', context)

@@ -189,9 +189,9 @@
 
 <nav>
     <div class="right-icons">
-        <form id="search-form" action="{% url 'resultsam' %}" method="get">
-            <input type="text" name="query" class="search-box" placeholder="검색어를 입력하세요">
-            <button type="button" onclick="document.getElementById('search-form').submit();">
+        <form action="{% url 'resultsam' %}" method="get">
+            <input type="text" name="q" class="search-box" placeholder="검색어를 입력하세요" required>
+            <button type="submit">
                 <img src="{% static 'Search.png' %}" alt="검색아이콘">
             </button>
         </form>
@@ -201,7 +201,7 @@
 
 <div class="left-menu">
     <div class="title-and-circles">
-        <h1>이슈 키워드</h1>
+        <h1>{{ keyword }}</h1>
         <div class="circle-container">
             <div class="circle">
                 <span>카테고리</span>
