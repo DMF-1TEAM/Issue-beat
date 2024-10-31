@@ -79,9 +79,9 @@ def news(request):
 
 def news_chart(request):
     group_by = request.GET.get('group', '1day')  # 기본값은 1일
-    news_data = []
     date_labels = []
     data_counts = []
+    images = []
 
     # 데이터가 존재하는 시작일과 종료일 가져오기
     min_date = News.objects.earliest('date').date
@@ -100,7 +100,13 @@ def news_chart(request):
         for single_date in date_range:
             date_labels.append(single_date.strftime('%Y-%m-%d'))
             data_counts.append(news_data_dict.get(single_date, 0))
-    
+            # 이미지 추가: 해당 날짜에 가장 최근 뉴스의 이미지를 가져옵니다.
+            try:
+                image_url = News.objects.filter(date=single_date).first().image
+                images.append(image_url)
+            except AttributeError:
+                images.append('')  # 기본값 (없을 경우 빈 문자열)
+
     elif group_by == '1week':
         # 주 단위 그룹화
         date_range = []
@@ -110,7 +116,7 @@ def news_chart(request):
             current_date += timedelta(weeks=1)
 
         news_data = (News.objects
-                      .extra(select={'week': "strftime('%Y-%m-%d', date, 'weekday 0', '-6 days')"})
+                      .annotate(week=TruncWeek('date'))  # Django 1.11 이상에서 사용할 수 있음
                       .values('week')
                       .annotate(count=Count('id'))
                       .order_by('week'))
@@ -120,6 +126,12 @@ def news_chart(request):
             week_str = single_week.strftime('%Y-%m-%d')
             date_labels.append(week_str)
             data_counts.append(news_data_dict.get(week_str, 0))
+            # 이미지 추가
+            try:
+                image_url = News.objects.filter(date__range=[single_week, single_week + timedelta(days=6)]).first().image
+                images.append(image_url)
+            except AttributeError:
+                images.append('')
 
     elif group_by == '1month':
         # 월 단위 그룹화
@@ -130,7 +142,7 @@ def news_chart(request):
             current_date = (current_date.replace(day=28) + timedelta(days=4)).replace(day=1)
 
         news_data = (News.objects
-                      .extra(select={'month': "strftime('%Y-%m', date)"})
+                      .annotate(month=TruncMonth('date'))
                       .values('month')
                       .annotate(count=Count('id'))
                       .order_by('month'))
@@ -140,6 +152,12 @@ def news_chart(request):
             month_str = single_month.strftime('%Y-%m')
             date_labels.append(month_str)
             data_counts.append(news_data_dict.get(month_str, 0))
+            # 이미지 추가
+            try:
+                image_url = News.objects.filter(date__month=single_month.month, date__year=single_month.year).first().image
+                images.append(image_url)
+            except AttributeError:
+                images.append('')
 
     elif group_by == '1year':
         # 연 단위 그룹화
@@ -150,7 +168,7 @@ def news_chart(request):
             current_date = current_date.replace(year=current_date.year + 1)
 
         news_data = (News.objects
-                      .extra(select={'year': "strftime('%Y', date)"})
+                      .annotate(year=TruncYear('date'))
                       .values('year')
                       .annotate(count=Count('id'))
                       .order_by('year'))
@@ -160,9 +178,16 @@ def news_chart(request):
             year_str = single_year.strftime('%Y')
             date_labels.append(year_str)
             data_counts.append(news_data_dict.get(year_str, 0))
+            # 이미지 추가
+            try:
+                image_url = News.objects.filter(date__year=single_year.year).first().image
+                images.append(image_url)
+            except AttributeError:
+                images.append('')
 
     context = {
         'date_labels': json.dumps(date_labels),
         'data_counts': json.dumps(data_counts),
+        'images': json.dumps(images),  # 이미지 리스트 추가
     }
     return render(request, 'chart.html', context)
