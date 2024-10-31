@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>검색결과창</title>
     <style>
         body {
@@ -110,12 +111,34 @@
             border-radius: 10px;
         }
 
-        .chart {
+        .news {
             max-width: 48%;
         }
 
-        .news {
-            max-width: 48%;
+        #chartjs-tooltip {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            position: absolute;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        #chartjs-tooltip img {
+            width: 100px;
+            height: 100px;
+            margin-right: 10px;
+        }
+        #tooltip-title {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        #tooltip-context {
+            font-size: 12px;
+            color: #666;
         }
 
         table {
@@ -151,19 +174,6 @@
         .more {
             text-align: right;
             margin-top: 20px;
-        }
-
-        button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #45a049;
         }
 
         .icon {
@@ -224,7 +234,128 @@
     </h2>
     <p>연도별 / 월별 / 일별 기사 수를 확인할 수 있는 차트</p>
     <div class="chart">
-        <p>여기에 라인차트 표시</p>
+        <label for="group">filter</label>
+        <select id="group">
+            <option value="1day">1일</option>
+            <option value="1week">1주</option>
+            <option value="1month">1개월</option>
+            <option value="1year">1년</option>
+        </select>
+        <button id="filterButton">적용</button>
+
+        <canvas id="dataCountChart"></canvas>
+        <div id="chartjs-tooltip" style="display: none;">
+            <img id="tooltip-image">
+            <div>
+                <div id="tooltip-title"></div>
+                <div id="tooltip-context"></div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const ctx = document.getElementById('dataCountChart').getContext('2d');
+
+                // 기본 데이터
+                const originalDateLabels = {{ date_labels|safe }};
+                const originalDataCounts = {{ data_counts|safe }};
+                const images = {{ images|safe }};  // 각 데이터에 대한 이미지 URL 배열
+
+                function getData(filter) {
+                    // 여기서 필터에 맞는 데이터로 변환하여 반환합니다.
+                    switch (filter) {
+                        case '1day':
+                            return {
+                                dateLabels: originalDateLabels.slice(-1),
+                                dataCounts: originalDataCounts.slice(-1),
+                                images: images.slice(-1)
+                            };
+                        case '1week':
+                            return {
+                                dateLabels: originalDateLabels.slice(-7),
+                                dataCounts: originalDataCounts.slice(-7),
+                                images: images.slice(-7)
+                            };
+                        case '1month':
+                            return {
+                                dateLabels: originalDateLabels.slice(-30),
+                                dataCounts: originalDataCounts.slice(-30),
+                                images: images.slice(-30)
+                            };
+                        case '1year':
+                            return {
+                                dateLabels: originalDateLabels.slice(-365),
+                                dataCounts: originalDataCounts.slice(-365),
+                                images: images.slice(-365)
+                            };
+                        default:
+                            return {
+                                dateLabels: originalDateLabels,
+                                dataCounts: originalDataCounts,
+                                images: images
+                            };
+                    }
+                }
+
+                let data = getData('1year');
+                const dataCountChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.dateLabels,
+                        datasets: [{
+                            label: '뉴스 데이터 수',
+                            data: data.dataCounts,
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            fill: true,
+                            tension: 0.5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { title: { display: true, text: '날짜' } },
+                            y: { title: { display: true, text: '데이터 수' }, beginAtZero: true }
+                        },
+                        plugins: {
+                            tooltip: {
+                                enabled: false,
+                                external: function(context) {
+                                    const tooltipModel = context.tooltip;
+                                    const tooltipEl = document.getElementById('chartjs-tooltip');
+
+                                    if (tooltipModel.opacity === 0) {
+                                        tooltipEl.style.opacity = 0;
+                                        return;
+                                    }
+
+                                    const position = context.chart.canvas.getBoundingClientRect();
+                                    tooltipEl.style.opacity = 1;
+                                    tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
+                                    tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
+
+                                    const index = tooltipModel.dataPoints[0].dataIndex;
+                                    document.getElementById('tooltip-title').innerText = data.dateLabels[index];
+                                    document.getElementById('tooltip-context').innerText = '데이터 수: ' + data.dataCounts[index];
+                                    document.getElementById('tooltip-image').src = data.images[index];  // 이미지 설정
+                                    tooltipEl.style.display = 'flex';
+                                }
+                            }
+                        }
+                    }
+                });
+
+                document.getElementById('filterButton').addEventListener('click', function () {
+                    const filter = document.getElementById('group').value;
+                    const newData = getData(filter);
+                    
+                    dataCountChart.data.labels = newData.dateLabels;
+                    dataCountChart.data.datasets[0].data = newData.dataCounts;
+                    data = newData; // 필터된 이미지도 적용되도록 갱신
+                    dataCountChart.update();
+                });
+            });
+        </script>
     </div>
 </section>
 
