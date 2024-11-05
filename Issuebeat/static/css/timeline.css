@@ -1,0 +1,71 @@
+.timeline-analysis {
+    padding: 20px;
+    position: relative;
+}
+
+.timeline-step {
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 30px;
+}
+
+.timeline-step:before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 24px;
+    bottom: -24px;
+    width: 2px;
+    background-color: #e5e7eb;
+}
+
+.timeline-step:last-child:before {
+    display: none;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #3b82f6;
+}
+
+.timeline-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.timeline-header h4 {
+    margin: 0;
+    margin-right: 12px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.timeline-date {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.timeline-content {
+    color: #4b5563;
+    line-height: 1.5;
+}
+
+.analysis-meta {
+    margin-top: 20px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.no-analysis {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
+}

@@ -1,0 +1,54 @@
+{% extends "web/base.html" %} 
+{% load static %} 
+
+{% block content %}
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- 차트 섹션 -->
+    <section class="mb-8">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="aspect-w-16 aspect-h-9">
+                <canvas id="timeline-chart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3단계 요약 섹션 -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="summary-section">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">배경</h3>
+            <div id="summary-level-1" class="prose"></div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">주요내용</h3>
+            <div id="summary-level-2" class="prose"></div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">현황</h3>
+            <div id="summary-level-3" class="prose"></div>
+        </div>
+    </section>
+
+    <!-- 뉴스 목록 섹션 -->
+    <section class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-medium text-gray-900">관련 뉴스</h2>
+            <div id="news-count" class="text-sm text-gray-500"></div>
+        </div>
+        <div id="news-list" class="space-y-4">
+            <!-- 뉴스 목록은 자바스크립트로 동적 추가 -->
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const searchQuery = "{{ query|escapejs }}";
+    console.log('Search query:', searchQuery);
+</script>
+<!-- IssueListHandler를 먼저 로드 -->
+<script src="{% static 'js/issue-list-handler.js' %}"></script>
+<!-- 그 다음 SearchHandler 로드 -->
+<script src="{% static 'js/search-handler.js' %}"></script>
+{% endblock %}
