@@ -232,7 +232,3 @@ def search_view(request):
         search_history.save()
 
     return render(request, 'web/search.html', {'query': query})
-
-
-def test(request):
-    pass
