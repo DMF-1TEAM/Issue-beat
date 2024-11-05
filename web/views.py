@@ -234,3 +234,5 @@ def search_view(request):
     return render(request, 'web/search.html', {'query': query})
 
 
+def test(request):
+    pass
