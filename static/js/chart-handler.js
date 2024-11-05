@@ -121,7 +121,8 @@ class IssuePulseChart {
             try {
                 await Promise.all([
                     this.updateSummary(date),
-                    this.updateNewsList(date)
+                    this.updateNewsList(date),
+                    summarizeNewsData(date)
                 ]);
 
                 // 활성 포인트 스타일 변경
