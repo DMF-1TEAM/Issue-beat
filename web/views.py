@@ -235,6 +235,7 @@ def search_view(request):
         search_history.save()
 
     return render(request, 'web/search.html', {'query': query})
+<<<<<<< HEAD
 
 @api_view(['GET'])
 def get_hover_summary(request, date):
@@ -260,3 +261,5 @@ def get_hover_summary(request, date):
             {'error': '데이터를 불러오는 중 오류가 발생했습니다.'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+=======
+>>>>>>> 1e0ee4a9202af2e598f825a04e0b79f9fdd9ef0c
