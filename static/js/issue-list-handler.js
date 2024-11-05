@@ -1,7 +1,7 @@
 class IssueListHandler {
     constructor() {
         this.newsListContainer = document.getElementById('news-list');
-        this.currentPage = 1;
+        this.currentPage = 10;
         this.hasMore = false;
         this.isLoading = false;
         this.currentDate = null;
