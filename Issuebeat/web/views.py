@@ -1,12 +1,15 @@
 from django.shortcuts import render
-import requests
 from .models import News
 from django.db.models import Count
+from django.db.models.functions import TruncWeek, TruncMonth, TruncYear
 import json
 from django.core.paginator import Paginator
 from rest_framework.pagination import PageNumberPagination
 from .pagination import PaginationHandlerMixin
 from datetime import timedelta
+from django.utils.dateparse import parse_date
+from django.http import JsonResponse
+
 
 def home(request):
     return render(request, 'home.html')
@@ -26,7 +29,10 @@ class NewsPagination(PageNumberPagination):
 
 def resultsam(request):
     # 뉴스 데이터 및 페이지네이션
+    selected_date = request.GET.get('date', '')
     news = News.objects.all().order_by('-date')
+    if selected_date:
+        news = news.filter(date=selected_date)
     paginator = Paginator(news, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -147,3 +153,41 @@ def resultsam(request):
         return render(request, 'partials/newslist.html', context)
 
     return render(request, 'resultsam.html', context)
+
+def result(request):
+    keyword = request.GET.get('keyword', '')  # URL 쿼리 파라미터로 키워드 가져오기
+    news_query = News.objects.filter(keyword__icontains=keyword).order_by('-date') if keyword else News.objects.all().order_by('-date')
+    initial_news = news_query[:10]  # 초기 데이터로 10개의 뉴스만 전달s
+    
+    context = {
+        "initial_news": initial_news,
+        "keyword": keyword,
+    }
+    return render(request, "result.html", context)
+
+
+def newslist(request, date=None, keyword=None):
+    news_query = News.objects.all()
+    
+    # 키워드 필터링
+    if keyword:
+        news_query = news_query.filter(title__icontains=keyword)
+    
+    # 날짜 필터링
+    if date:
+        date_obj = parse_date(date)
+        if date_obj:
+            news_query = news_query.filter(date=date_obj)
+
+    # 뉴스 정렬 및 제한
+    news = news_query.order_by('-date')[:10]
+    newslist = [
+        {
+            "date": n.date.strftime("%Y-%m-%d"),
+            "title": n.title,
+            "link": n.link,
+            "press": n.press
+        }
+        for n in news
+    ]
+    return JsonResponse({"newslist": newslist})
