@@ -29,7 +29,7 @@
     </section>
 
     <!-- 뉴스 목록 섹션 -->
-    <section class="bg-white rounded-lg shadow-sm p-6">
+    <section class="bg-white rounded-lg shadow-sm p-6" style="height: 500px; overflow-y: auto;">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-medium text-gray-900">관련 뉴스</h2>
             <div id="news-count" class="text-sm text-gray-500"></div>
@@ -39,16 +39,48 @@
         </div>
     </section>
 </main>
+
+<!-- 호버 팝업을 위한 스타일 -->
+<style>
+    #hover-summary {
+        pointer-events: none;
+        animation: fadeIn 0.2s ease-out;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
 {% endblock %}
 
 {% block extra_scripts %}
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- 초기 데이터 설정 -->
 <script>
     const searchQuery = "{{ query|escapejs }}";
     console.log('Search query:', searchQuery);
 </script>
-<!-- IssueListHandler를 먼저 로드 -->
+
+<!-- 핸들러 스크립트 로드 -->
 <script src="{% static 'js/issue-list-handler.js' %}"></script>
-<!-- 그 다음 SearchHandler 로드 -->
+<script src="{% static 'js/chart-handler.js' %}"></script>
 <script src="{% static 'js/search-handler.js' %}"></script>
+
+<!-- 차트 초기화 -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // 기존 차트 인스턴스 제거
+        const existingChart = Chart.getChart('timeline-chart');
+        if (existingChart) {
+            existingChart.destroy();
+        }
+        
+        // 새로운 차트 초기화
+        const issuePulseChart = new IssuePulseChart();
+    });
+</script>
 {% endblock %}
