@@ -235,13 +235,12 @@ def search_view(request):
         search_history.save()
 
     return render(request, 'web/search.html', {'query': query})
-<<<<<<< HEAD
 
 @api_view(['GET'])
 def get_hover_summary(request, date):
     """마우스 오버시 보여줄 요약 정보를 반환하는 API"""
     try:
-<<<<<<< HEAD
+
         print(f"Fetching hover summary for date: {date}")  # 디버깅용 로그
         
         # 날짜 문자열을 datetime 객체로 변환
@@ -270,27 +269,3 @@ def get_hover_summary(request, date):
             }, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-=======
-        # 날짜 형식 변환
-        date_obj = datetime.strptime(date, '%Y-%m-%d').date()
-        
-        # 요약 데이터 생성
-        analyzer = DailyIssueService()
-        summary_data = analyzer.get_daily_summary_data(date_obj)
-        
-        return Response(summary_data)
-        
-    except ValueError:
-        return Response(
-            {'error': '잘못된 날짜 형식입니다.'}, 
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    except Exception as e:
-        print(f"Error in get_hover_summary: {e}")
-        return Response(
-            {'error': '데이터를 불러오는 중 오류가 발생했습니다.'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-=======
->>>>>>> 1e0ee4a9202af2e598f825a04e0b79f9fdd9ef0c
->>>>>>> d431d40c1393b167b886b89b73afa3795ad4ce59
