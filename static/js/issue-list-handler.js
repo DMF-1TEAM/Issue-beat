@@ -1,8 +1,8 @@
 class IssueListHandler {
     constructor() {
         this.newsListContainer = document.getElementById('news-list');
-        this.currentPage = 10;
-        this.hasMore = false;
+        this.currentPage = 1;
+        this.hasMore = true;
         this.isLoading = false;
         this.currentDate = null;
         this.searchQuery = null;
@@ -76,30 +76,37 @@ class IssueListHandler {
 
     async loadMoreNews() {
         if (this.isLoading || !this.hasMore) return;
-
+    
         this.isLoading = true;
         this.showLoadingIndicator();
 
+        console.log("==============")
+        console.log(this.searchQuery)
+    
         try {
             const nextPage = this.currentPage + 1;
             let url;
-            
+    
+            // currentDate, searchQuery 조건에 맞는 URL 설정
             if (this.currentDate) {
-                url = `/api/news/date/${this.currentDate}?page=${nextPage}`;
+                url = `/api/news/date/${this.currentDate}/?page=${nextPage}`;
             } else {
                 url = `/api/news/search/?query=${encodeURIComponent(this.searchQuery)}&page=${nextPage}`;
             }
-
+    
+            console.log("Loading URL:", url);
+    
             const response = await fetch(url);
-            const data = await response.json();
-
             if (!response.ok) {
-                throw new Error(data.error || '뉴스를 불러오는 중 오류가 발생했습니다.');
+                throw new Error('Failed to fetch news data');
             }
-
+    
+            const data = await response.json();
+            console.log("Response Data:", data);  // 응답 데이터 확인
+    
             await this.updateNewsList(data, false);
             this.currentPage = nextPage;
-
+    
         } catch (error) {
             console.error('Error loading more news:', error);
             this.showError('추가 뉴스를 불러오는데 실패했습니다.');
@@ -107,7 +114,7 @@ class IssueListHandler {
             this.isLoading = false;
             this.hideLoadingIndicator();
         }
-    }
+    }    
 
     async handleDateClick(date) {
         this.currentDate = date;
