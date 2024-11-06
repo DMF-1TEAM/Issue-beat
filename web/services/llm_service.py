@@ -8,7 +8,7 @@ class LLMService:
         
     def generate_structured_summary(self, news_list: List[Dict], search_keyword: str, is_overall: bool = True) -> Dict:
         try:
-            # 뉴스 텍스트 준비를 먼저 수행
+            # 뉴스 텍스트 준비
             news_text = "\n\n".join([
                 f"제목: {news['title']}\n내용: {news['content']}"
                 for news in news_list
@@ -18,10 +18,20 @@ class LLMService:
     당신은 뉴스 분석 전문가입니다.
     현재 '{search_keyword}'와 관련된 뉴스들을 분석하게 됩니다.
     이 키워드를 중심으로 관련 뉴스들의 맥락을 파악하고 구조화된 요약을 제공해주세요.
+    반드시 JSON 형식으로 응답해주세요.
     """
 
             user_prompt = f"""
-    '{search_keyword}' 키워드로 검색된 다음 뉴스들을 분석하여 3단계로 요약해주세요:
+    '{search_keyword}' 키워드로 검색된 다음 뉴스들을 분석하여 JSON 형식으로 3단계 요약을 생성해주세요.
+    다음 형식으로 응답해주세요:
+
+    {{
+        "background": "배경 설명",
+        "core_content": "핵심 내용",
+        "conclusion": "결론"
+    }}
+
+    각 섹션에서 다뤄야 할 내용:
 
     1. 배경 (background):
     - '{search_keyword}' 관련 이슈가 발생하게 된 배경과 원인
@@ -44,6 +54,8 @@ class LLMService:
     {{"type": "참고", "keyword": "{search_keyword}", "is_overall": {str(is_overall).lower()}}}
     - is_overall이 true인 경우: 이슈의 전체적인 흐름과 맥락을 중심으로 요약
     - is_overall이 false인 경우: 최근 상황과 변화를 중심으로 요약
+
+    반드시 JSON 형식으로 응답해주세요.
     """
 
             # 디버깅을 위한 로그
@@ -52,12 +64,12 @@ class LLMService:
 
             # API 요청
             response = self.client.chat.completions.create(
-                model="gpt-4-turbo-preview",
+                model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                response_format={ "type": "json_object" },
+                response_format={"type": "json_object"},
                 temperature=0.5
             )
 

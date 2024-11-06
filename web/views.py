@@ -55,7 +55,7 @@ class SearchNewsAPIView(APIView):
                             'title': news.title,
                             'content': news.content  # 전체 내용 사용
                         }
-                        for news in news_list[0:]  # 요약을 위한 뉴스 수 증가
+                        for news in news_list[0:200:2]  # 요약을 위한 뉴스 수 증가
                     ]
                     summary = llm_service.generate_structured_summary(
                         summary_data,
