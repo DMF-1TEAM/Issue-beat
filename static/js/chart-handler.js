@@ -134,6 +134,28 @@ class IssuePulseChart {
         this.chart = new Chart(ctx, config);
     }
 
+    async handleChartClick(event) {
+        const points = this.chart.getElementsAtEventForMode(event, 'index', { intersect: true });
+        
+        if (points.length > 0) {
+            const index = points[0].index;
+            const date = this.chartData[index].date;
+            this.currentDate = date;
+
+            try {
+                await Promise.all([
+                    this.updateSummary(date),
+                    this.updateNewsList(date),
+                    summarizeNewsData(date)
+                ]);
+
+                // 활성 포인트 스타일 변경
+                this.updateChartStyle(index);
+            } catch (error) {
+                console.error('데이터 업데이트 중 오류:', error);
+            }
+        }
+    }
     showHoverSummary(data, event) {
         this.hideHoverSummary();
 
