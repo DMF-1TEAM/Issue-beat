@@ -4,11 +4,16 @@ class IssuePulseChart {
     constructor() {
         this.chart = null;
         this.hoverTimeout = null;
+<<<<<<< HEAD
+        this.chartData = null;
+=======
+>>>>>>> d431d40c1393b167b886b89b73afa3795ad4ce59
         this.initialize();
     }
 
     async initialize() {
         try {
+            console.log('Initializing IssuePulseChart...');
             await this.loadChartData();
             this.renderChart();
             this.setupEventListeners();  // 이벤트 리스너 설정 추가
@@ -31,13 +36,26 @@ class IssuePulseChart {
 
     setupEventListeners() {
         const canvas = document.getElementById('timeline-chart');
+<<<<<<< HEAD
+        if (!canvas) {
+            console.error('Chart canvas not found');
+            return;
+        }
+
+        // 마우스 이벤트 리스너 추가
+=======
         if (!canvas) return;
 
+>>>>>>> d431d40c1393b167b886b89b73afa3795ad4ce59
         canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
         canvas.addEventListener('mouseout', () => this.hideHoverSummary());
     }
 
     handleMouseMove(event) {
+<<<<<<< HEAD
+        // 디바운싱 처리
+=======
+>>>>>>> d431d40c1393b167b886b89b73afa3795ad4ce59
         if (this.hoverTimeout) {
             clearTimeout(this.hoverTimeout);
         }
@@ -57,7 +75,11 @@ class IssuePulseChart {
             } else {
                 this.hideHoverSummary();
             }
+<<<<<<< HEAD
+        }, 100); // 100ms 딜레이
+=======
         }, 100);
+>>>>>>> d431d40c1393b167b886b89b73afa3795ad4ce59
     }
 
     async fetchAndShowSummary(date, event) {
@@ -123,6 +145,17 @@ class IssuePulseChart {
                             color: 'rgba(0, 0, 0, 0.1)'
                         }
                     }
+<<<<<<< HEAD
+                }
+            }
+        };
+
+        this.chart = new Chart(ctx, config);
+    }
+
+    showHoverSummary(data, event) {
+        this.hideHoverSummary(); // 기존 팝업 제거
+=======
                 },
                 hover: {
                     mode: 'nearest',
@@ -133,10 +166,18 @@ class IssuePulseChart {
 
         this.chart = new Chart(ctx, config);
     }
+>>>>>>> d431d40c1393b167b886b89b73afa3795ad4ce59
 
-    async handleChartClick(event) {
-        const points = this.chart.getElementsAtEventForMode(event, 'index', { intersect: true });
+        const popup = document.createElement('div');
+        popup.id = 'hover-summary';
+        popup.className = 'fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-4 max-w-sm';
         
+<<<<<<< HEAD
+        popup.innerHTML = `
+            <div class="space-y-4">
+                ${data.image_url ? `
+                    <div class="relative h-32 bg-gray-100 rounded overflow-hidden">
+=======
         if (points.length > 0) {
             const index = points[0].index;
             const date = this.chartData[index].date;
@@ -167,6 +208,7 @@ class IssuePulseChart {
             <div class="space-y-4">
                 ${data.image_url ? `
                     <div class="relative h-40 bg-gray-100 rounded overflow-hidden">
+>>>>>>> d431d40c1393b167b886b89b73afa3795ad4ce59
                         <img src="${data.image_url}" 
                              alt="뉴스 이미지" 
                              class="w-full h-full object-cover"
@@ -176,7 +218,11 @@ class IssuePulseChart {
                 ` : ''}
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
+<<<<<<< HEAD
+                        <span class="text-sm font-medium text-gray-900">
+=======
                         <span class="text-sm font-semibold text-gray-900">
+>>>>>>> d431d40c1393b167b886b89b73afa3795ad4ce59
                             ${this.formatDate(data.date)}
                         </span>
                         <span class="text-sm text-gray-500">
@@ -191,6 +237,8 @@ class IssuePulseChart {
                             ${data.content_summary}
                         </p>
                     </div>
+<<<<<<< HEAD
+=======
                     ${data.top_keywords?.length ? `
                         <div class="flex flex-wrap gap-1 pt-2">
                             ${data.top_keywords.map(keyword => `
@@ -200,6 +248,7 @@ class IssuePulseChart {
                             `).join('')}
                         </div>
                     ` : ''}
+>>>>>>> d431d40c1393b167b886b89b73afa3795ad4ce59
                 </div>
             </div>
         `;
@@ -207,6 +256,7 @@ class IssuePulseChart {
         document.body.appendChild(popup);
         this.positionPopup(popup, event);
     }
+<<<<<<< HEAD
 
     hideHoverSummary() {
         const existing = document.getElementById('hover-summary');
@@ -234,6 +284,35 @@ class IssuePulseChart {
         left = Math.max(padding, left);
         top = Math.max(padding, top);
 
+=======
+
+    hideHoverSummary() {
+        const existing = document.getElementById('hover-summary');
+        if (existing) {
+            existing.remove();
+        }
+    }
+
+    positionPopup(popup, event) {
+        const padding = 16;
+        const rect = popup.getBoundingClientRect();
+        
+        let left = event.clientX + padding;
+        let top = event.clientY + padding;
+
+        // 화면 경계 체크
+        if (left + rect.width > window.innerWidth) {
+            left = event.clientX - rect.width - padding;
+        }
+        if (top + rect.height > window.innerHeight) {
+            top = event.clientY - rect.height - padding;
+        }
+
+        // 최소 여백 확보
+        left = Math.max(padding, left);
+        top = Math.max(padding, top);
+
+>>>>>>> d431d40c1393b167b886b89b73afa3795ad4ce59
         popup.style.left = `${left}px`;
         popup.style.top = `${top}px`;
     }
