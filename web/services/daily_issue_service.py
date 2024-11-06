@@ -93,4 +93,8 @@ class DailyIssueService:
                 'title_summary': "데이터 처리 실패",
                 'content_summary': "데이터 처리 실패",
                 'news_count': 0
+<<<<<<< HEAD
             }
+=======
+            }   
+>>>>>>> d431d40c1393b167b886b89b73afa3795ad4ce59
