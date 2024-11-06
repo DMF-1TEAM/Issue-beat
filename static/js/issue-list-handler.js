@@ -107,7 +107,6 @@ class IssueListHandler {
     
         } catch (error) {
             console.error('Error loading more news:', error);
-            this.showError('추가 뉴스를 불러오는데 실패했습니다.');
         } finally {
             this.isLoading = false; // 로딩 완료 후 isLoading 상태 갱신
             this.hideLoadingIndicator();
