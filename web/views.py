@@ -44,34 +44,25 @@ class SearchNewsAPIView(APIView):
                 for item in daily_counts
             }
 
-            # 3. 페이지네이션
-            paginator = Paginator(news_list, page_size)
-            current_page = paginator.page(page)
-            
-            news_data = [{
-                'id': news.id,
-                'title': news.title,
-                'content': news.content[:200],
-                'press': news.press,
-                'date': news.date.strftime('%Y-%m-%d') if news.date else None,
-                'link': news.link
-            } for news in current_page.object_list]
-
-            # 4. LLM 요약 생성
+            # 3. LLM 요약 생성 (페이지네이션 전에 수행)
             try:
                 if total_count > 0:
                     analyzer = DailyIssueService()
                     llm_service = LLMService()
+                    # 요약을 위한 전체 데이터 사용 (제한을 늘리거나 제거)
                     summary_data = [
                         {
                             'title': news.title,
-                            'content': news.content
+                            'content': news.content  # 전체 내용 사용
                         }
-                        for news in news_list[:10]
+                        for news in news_list[0:]  # 요약을 위한 뉴스 수 증가
                     ]
-                    summary = llm_service.generate_structured_summary(summary_data)
+                    summary = llm_service.generate_structured_summary(
+                        summary_data,
+                        search_keyword=query,  # 검색 키워드 전달
+                        is_overall=True
+                    )
                     
-                    # 요약 결과가 없는 경우 기본값 설정
                     if not summary or not isinstance(summary, dict):
                         summary = {
                             'background': '요약 정보가 없습니다.',
@@ -91,6 +82,20 @@ class SearchNewsAPIView(APIView):
                     'core_content': '요약 생성 중 오류가 발생했습니다.',
                     'conclusion': '요약 생성 중 오류가 발생했습니다.'
                 }
+
+            # 4. 페이지네이션 (요약 생성 후에 수행)
+            paginator = Paginator(news_list, page_size)
+            current_page = paginator.page(page)
+            
+            # 화면 표시용 뉴스 데이터는 미리보기로 제한
+            news_data = [{
+                'id': news.id,
+                'title': news.title,
+                'content': news.content[:200],  # 화면 표시용으로만 제한
+                'press': news.press,
+                'date': news.date.strftime('%Y-%m-%d') if news.date else None,
+                'link': news.link
+            } for news in current_page.object_list]
 
             return Response({
                 'news_list': news_data,
