@@ -15,4 +15,4 @@ urlpatterns = [
     path('api/trending/', views.get_trending_keywords_api, name='trending_keywords'),
     path('api/stats/daily/', views.get_daily_stats, name='daily_stats'),
     path('api/suggestions/', views.get_search_suggestions_api, name='suggestions'),
-]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
