@@ -44,34 +44,25 @@ class SearchNewsAPIView(APIView):
                 for item in daily_counts
             }
 
-            # 3. 페이지네이션
-            paginator = Paginator(news_list, page_size)
-            current_page = paginator.page(page)
-            
-            news_data = [{
-                'id': news.id,
-                'title': news.title,
-                'content': news.content[:200],
-                'press': news.press,
-                'date': news.date.strftime('%Y-%m-%d') if news.date else None,
-                'link': news.link
-            } for news in current_page.object_list]
-
-            # 4. LLM 요약 생성
+            # 3. LLM 요약 생성 (페이지네이션 전에 수행)
             try:
                 if total_count > 0:
                     analyzer = DailyIssueService()
                     llm_service = LLMService()
+                    # 요약을 위한 전체 데이터 사용 (제한을 늘리거나 제거)
                     summary_data = [
                         {
                             'title': news.title,
-                            'content': news.content
+                            'content': news.content  # 전체 내용 사용
                         }
-                        for news in news_list[:10]
+                        for news in news_list[0:200:2]  # 요약을 위한 뉴스 수 증가
                     ]
-                    summary = llm_service.generate_structured_summary(summary_data)
+                    summary = llm_service.generate_structured_summary(
+                        summary_data,
+                        search_keyword=query,  # 검색 키워드 전달
+                        is_overall=True
+                    )
                     
-                    # 요약 결과가 없는 경우 기본값 설정
                     if not summary or not isinstance(summary, dict):
                         summary = {
                             'background': '요약 정보가 없습니다.',
@@ -91,6 +82,20 @@ class SearchNewsAPIView(APIView):
                     'core_content': '요약 생성 중 오류가 발생했습니다.',
                     'conclusion': '요약 생성 중 오류가 발생했습니다.'
                 }
+
+            # 4. 페이지네이션 (요약 생성 후에 수행)
+            paginator = Paginator(news_list, page_size)
+            current_page = paginator.page(page)
+            
+            # 화면 표시용 뉴스 데이터는 미리보기로 제한
+            news_data = [{
+                'id': news.id,
+                'title': news.title,
+                'content': news.content[:200],  # 화면 표시용으로만 제한
+                'press': news.press,
+                'date': news.date.strftime('%Y-%m-%d') if news.date else None,
+                'link': news.link
+            } for news in current_page.object_list]
 
             return Response({
                 'news_list': news_data,
@@ -240,23 +245,32 @@ def search_view(request):
 def get_hover_summary(request, date):
     """마우스 오버시 보여줄 요약 정보를 반환하는 API"""
     try:
-        # 날짜 형식 변환
+
+        print(f"Fetching hover summary for date: {date}")  # 디버깅용 로그
+        
+        # 날짜 문자열을 datetime 객체로 변환
         date_obj = datetime.strptime(date, '%Y-%m-%d').date()
         
-        # 요약 데이터 생성
+        # DailyIssueService 인스턴스 생성 및 요약 데이터 가져오기
         analyzer = DailyIssueService()
         summary_data = analyzer.get_daily_summary_data(date_obj)
         
+        print(f"Generated summary data: {summary_data}")  # 디버깅용 로그
+        
         return Response(summary_data)
         
-    except ValueError:
+    except ValueError as e:
+        print(f"Date parsing error: {e}")  # 디버깅용 로그
         return Response(
-            {'error': '잘못된 날짜 형식입니다.'}, 
+            {'error': '잘못된 날짜 형식입니다. (YYYY-MM-DD)'}, 
             status=status.HTTP_400_BAD_REQUEST
         )
     except Exception as e:
-        print(f"Error in get_hover_summary: {e}")
+        print(f"Error in get_hover_summary: {e}")  # 디버깅용 로그
         return Response(
-            {'error': '데이터를 불러오는 중 오류가 발생했습니다.'}, 
+            {
+                'error': '데이터를 불러오는 중 오류가 발생했습니다.',
+                'detail': str(e) if settings.DEBUG else None
+            }, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

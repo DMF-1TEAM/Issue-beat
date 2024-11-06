@@ -190,10 +190,8 @@ LOGGING = {
 }
 
 CORS_ALLOW_ALL_ORIGINS = True
-
 # CORS 관련 추가 설정
 CORS_ALLOW_CREDENTIALS = True
-
 CORS_ALLOW_METHODS = [
     'DELETE',
     'GET',
@@ -202,7 +200,6 @@ CORS_ALLOW_METHODS = [
     'POST',
     'PUT',
 ]
-
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
