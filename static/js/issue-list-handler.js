@@ -75,43 +75,41 @@ class IssueListHandler {
     }
 
     async loadMoreNews() {
-        if (this.isLoading || !this.hasMore) return;
+        if (this.isLoading || !this.hasMore) return; // isLoading 또는 hasMore가 false일 경우 호출 방지
     
         this.isLoading = true;
         this.showLoadingIndicator();
-
-        console.log("==============")
-        console.log(this.searchQuery)
-    
+        
         try {
             const nextPage = this.currentPage + 1;
             let url;
     
-            // currentDate, searchQuery 조건에 맞는 URL 설정
+            // currentDate 또는 searchQuery에 따라 URL 설정
             if (this.currentDate) {
                 url = `/api/news/date/${this.currentDate}/?page=${nextPage}`;
             } else {
                 url = `/api/news/search/?query=${encodeURIComponent(this.searchQuery)}&page=${nextPage}`;
             }
-    
+            
             console.log("Loading URL:", url);
-    
+            
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Failed to fetch news data');
             }
     
             const data = await response.json();
-            console.log("Response Data:", data);  // 응답 데이터 확인
+            console.log("Response Data:", data); // 응답 데이터 확인
     
-            await this.updateNewsList(data, false);
+            await this.updateNewsList(data, false); // 리스트 추가로 업데이트
             this.currentPage = nextPage;
+            this.hasMore = data.has_next; // 다음 페이지 유무 갱신
     
         } catch (error) {
             console.error('Error loading more news:', error);
             this.showError('추가 뉴스를 불러오는데 실패했습니다.');
         } finally {
-            this.isLoading = false;
+            this.isLoading = false; // 로딩 완료 후 isLoading 상태 갱신
             this.hideLoadingIndicator();
         }
     }    
