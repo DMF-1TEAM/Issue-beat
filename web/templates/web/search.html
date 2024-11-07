@@ -67,9 +67,9 @@
 
 <!-- 핸들러 스크립트 로드 -->
 <script src="{% static 'js/news-list-handler.js' %}"></script>
-<!-- <script src="{% static 'js/chart-handler.js' %}"></script>
-<script src="{% static 'js/search-handler.js' %}"></script> -->
-
+<script src="{% static 'js/chart-handler.js' %}"></script>
+<!-- <script src="{% static 'js/search-handler.js' %}"></script> -->
+ 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const searchQuery = "{{ query|escapejs }}";
@@ -77,6 +77,10 @@
             const newsListHandler = new NewsListHandler(); 
             newsListHandler.fetchNews();
         }
+        
+        // 새로운 차트 초기화
+        // chart-handler.js에 정의한 IssuePulseChart
+        const issuePulseChart = new IssuePulseChart();
     });
 </script>
 {% endblock %}

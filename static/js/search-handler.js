@@ -57,60 +57,9 @@ class SearchHandler {
         }
     }
 
-    initializeChart(dailyCounts) {
-        const ctx = document.getElementById('timeline-chart');
-        if (!ctx) return;
-
-        if (this.chart) {
-            this.chart.destroy();
-        }
-
-        const dates = Object.keys(dailyCounts).sort();
-        const counts = dates.map(date => dailyCounts[date]);
-
-        this.chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [{
-                    data: counts,
-                    borderColor: '#3B82F6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
-            },
-            options: {
-                onClick: this.handleChartClick.bind(this),
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    },
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    }
 
     async handleChartClick(event, elements) {
+        console.log("=====click!!!!!!!!!!=====")
         if (!elements || elements.length === 0) return;
 
         const index = elements[0].index;
