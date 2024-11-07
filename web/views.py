@@ -2,6 +2,7 @@ import logging
 from django.db.models import Max
 from datetime import datetime, timedelta
 from django.db.models import Q, Count
+from django.db.models import Min, Max
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 from django.core.paginator import Paginator
 from django.core.cache import cache
@@ -80,8 +81,7 @@ def get_hover_summary(request, date):
 #     3-1. 전체 기간 뉴스 목록
 #     3-2. 차트 클릭시 해당 날짜 뉴스 목록
 
-
-# 1. 뉴스데이터 날짜별 개수 라인차트 보여주기위한 데이터 (/api/v2/news/chart/?query=)
+# 1. 날짜별 뉴스건수 (/api/v2/news/chart/?query=keyword&groupby=day)
 @api_view(['GET'])
 def news_count_chart_api(request):
     """
@@ -108,38 +108,77 @@ def news_count_chart_api(request):
         }
     ]
     """
-
     query = request.GET.get('query', '').strip()
     group_by = request.GET.get('group_by', '1day').strip()
 
-    # 뉴스 검색
+    # 뉴스 검색: query를 사용해 제목과 내용에서 검색어 포함된 뉴스만 필터링
     news_list = News.objects.filter(
         Q(title__icontains=query) | Q(content__icontains=query)
     ).order_by('-date')
 
-    # 날짜별 집계
-    if group_by == '1day':
-        date_trunc = TruncDay('date')
-    elif group_by == '1week':
-        date_trunc = TruncWeek('date')
-    elif group_by == '1month':
-        date_trunc = TruncMonth('date')
+    # 시작 끝 날짜 
+    min_date = news_list.earliest('date').date
+    max_date = news_list.latest('date').date
 
-    counts = (
-         news_list
-            .annotate(date_trunc=date_trunc)    # date_trunc 필드 추가
-            .values('date_trunc')               # date_trunc만 남기기
-            .annotate(count=Count('id'))        # count 필드 추가
-            .order_by('date_trunc')             # date_trunc 기준 정렬
-    )
-    
-    # 객체를 배열로 전환
-    counts_dict = [
-        {"date": item['date_trunc'].strftime('%Y-%m-%d'), "count": item['count']}
-        for item in counts
+    # agg_by_date 함수로 날짜별 집계 결과를 받음
+    date_labels, data_counts = agg_by_date(news_list, group_by, min_date, max_date)
+
+    # 날짜별 카운트 결과 반환
+    chart_data = [
+        {"date": date, "count": count}
+        for date, count in zip(date_labels, data_counts)
     ]
 
-    return Response(counts_dict)
+    return Response(chart_data)
+
+
+def agg_by_date(news_list, group_by, min_date, max_date):
+    date_labels = []
+    data_counts = []
+
+    # 기준에 따른 날짜 범위 생성
+    print(group_by)
+    if group_by == '1day':
+        date_range = [min_date + timedelta(days=i) for i in range((max_date - min_date).days + 1)]
+        news_data = news_list.values('date').annotate(count=Count('id')).order_by('date')
+        news_data_dict = {entry['date']: entry['count'] for entry in news_data}
+        for single_date in date_range:
+            date_labels.append(single_date.strftime('%Y-%m-%d'))
+            data_counts.append(news_data_dict.get(single_date, 0))
+
+    elif group_by == '1week':
+        date_range = []
+        current_date = min_date
+        while current_date <= max_date:
+            date_range.append(current_date)
+            current_date += timedelta(weeks=1)
+        news_data = (news_list
+                     .extra(select={'week': "strftime('%Y-%m-%d', date, 'weekday 0', '-6 days')"})
+                     .values('week').annotate(count=Count('id')).order_by('week'))
+        news_data_dict = {entry['week']: entry['count'] for entry in news_data}
+
+        for single_week in date_range:
+            week_str = single_week.strftime('%Y-%m-%d')
+            date_labels.append(week_str)
+            data_counts.append(news_data_dict.get(week_str, 0))
+
+    elif group_by == '1month':
+        date_range = []
+        current_date = min_date.replace(day=1)
+        while current_date <= max_date:
+            date_range.append(current_date)
+            current_date = (current_date.replace(day=28) + timedelta(days=4)).replace(day=1)
+        news_data = (news_list
+                     .extra(select={'month': "strftime('%Y-%m', date)"})
+                     .values('month').annotate(count=Count('id')).order_by('month'))
+        news_data_dict = {entry['month']: entry['count'] for entry in news_data}
+
+        for single_month in date_range:
+            month_str = single_month.strftime('%Y-%m')
+            date_labels.append(month_str)
+            data_counts.append(news_data_dict.get(month_str, 0))
+
+    return date_labels, data_counts
 
 
 # 2. 뉴스 요약 생성 (/api/v2/news/summary/?query=keyword&date=2024-11-01)
