@@ -21,7 +21,7 @@ class SearchNewsAPIView(APIView):
     def get(self, request):
         query = request.GET.get('query', '').strip()
         page = int(request.GET.get('page', 1))
-        page_size = int(request.GET.get('page_size', 100000))
+        page_size = int(request.GET.get('page_size', 1000))
 
         if not query:
             return Response({'error': '검색어를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -161,7 +161,7 @@ def get_search_suggestions_api(request):
 @api_view(['GET'])
 def get_news_by_date(request, date):
     page = int(request.GET.get('page', 1))
-    page_size = int(request.GET.get('page_size', 100000))
+    page_size = int(request.GET.get('page_size', 1000))
 
     try:
         news_list = News.objects.filter(date=date).order_by('-press')
