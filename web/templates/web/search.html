@@ -15,15 +15,15 @@
     <!-- 3단계 요약 섹션 -->
     <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="summary-section">
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">배경</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4"></h3>
             <div id="summary-level-1" class="prose"></div>
         </div>
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">주요내용</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4"></h3>
             <div id="summary-level-2" class="prose"></div>
         </div>
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">현황</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4"></h3>
             <div id="summary-level-3" class="prose"></div>
         </div>
     </section>
@@ -68,7 +68,7 @@
 <!-- 핸들러 스크립트 로드 -->
 <script src="{% static 'js/news-list-handler.js' %}"></script>
 <script src="{% static 'js/chart-handler.js' %}"></script>
-<!-- <script src="{% static 'js/search-handler.js' %}"></script> -->
+<script src="{% static 'js/summary-handler.js' %}"></script>
  
 <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -81,6 +81,13 @@
         const existingChart = Chart.getChart('timeline-chart');
         if (existingChart) {
             existingChart.destroy();
+        }
+
+        if (searchQuery) {
+            // 요약 핸들러 초기화 및 데이터 로드
+            window.summaryHandler = new SummaryHandler();
+            const today = new Date().toISOString().split('T')[0];
+            window.summaryHandler.updateSummary(searchQuery, today);
         }
         
         // 새로운 차트 초기화
