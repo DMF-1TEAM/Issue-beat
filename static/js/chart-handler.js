@@ -1,8 +1,19 @@
-// chart-handler.js
-
 class IssuePulseChart {
+
     constructor() {
         this.chart = null;
+<<<<<<< HEAD
+        this.selectedDate = null; 
+        this.initChart();
+        this.fetchDataAndUpdateChart();
+        this.setupClickEvent();
+    }
+
+    // 차트 초기화
+    initChart() {
+        const ctx = document.getElementById('timeline-chart').getContext('2d');
+        this.chart = new Chart(ctx, {
+=======
         this.hoverTimeout = null;
         this.chartData = null;
         this.initialize();
@@ -89,11 +100,13 @@ class IssuePulseChart {
         if (!ctx) return;
 
         const config = {
+>>>>>>> master
             type: 'line',
             data: {
-                labels: this.chartData.map(d => d.date),
+                labels: [], // 일자
                 datasets: [{
-                    data: this.chartData.map(d => d.count),
+                    label: '기사 수',
+                    data: [], // 기사 수 데이터
                     borderColor: '#3B82F6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     borderWidth: 2,
@@ -105,20 +118,29 @@ class IssuePulseChart {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        enabled: false  // 기본 툴팁 비활성화
-                    }
-                },
                 scales: {
+<<<<<<< HEAD
+                    x: { title: { display: true, text: 'Date' } },
+                    y: { title: { display: true, text: 'Count' } }
+                }, 
+            
+            }
+        });
+    }
+
+    // 차트 데이터 api 호출
+    fetchDataAndUpdateChart() {
+        fetch(`/api/v2/news/chart/?query=${encodeURIComponent(searchQuery)}`)
+            .then(response => response.json())
+            .then(data => {
+
+                console.log(data);
+                if (Array.isArray(data)) {
+                    const chartData = data.map(item => item.count);
+                    // 차트 처리 코드
+                } else {
+                    console.error("Data is not an array:", data);
+=======
                     x: {
                         grid: {
                             display: false
@@ -130,9 +152,51 @@ class IssuePulseChart {
                             color: 'rgba(0, 0, 0, 0.1)'
                         }
                     }
+>>>>>>> master
                 }
+                
+                const dates = data.map(item => item.date);
+                const counts = data.map(item => item.count);
+
+  
+                // 차트 업데이트
+                this.chart.data.labels = dates;
+                this.chart.data.datasets[0].data = counts;
+                this.chart.update();
+            })
+            .catch(error => console.error('Error fetching chart data:', error));
+    }
+
+    // 클릭 이벤트 설정
+    setupClickEvent() {
+        this.chart.canvas.onclick = (evt) => {
+
+            // 클릭 위치와 가장 가까운 데이터 포인트 찾음.
+            const points = this.chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+            console.log(points)
+
+            // 포인터가 있으면
+            if (points.length) {          
+                const firstPoint = points[0];
+                console.log(firstPoint)
+                const date = this.chart.data.labels[firstPoint.index];
+                
+                // 커스텀 이벤트 발생시키기만 함
+                const clickEvent = new CustomEvent('chartDateClick', {
+                    detail: { date }
+                });
+                document.dispatchEvent(clickEvent);    // 다른 스크립트에서 document.addEventListener를 통해 실행
+                
+                // URL 업데이트
+                const searchParams = new URLSearchParams(window.location.search);       // 현재 url 쿼리를 문자열을 객체화
+                searchParams.set('date', date);                                         // url 쿼리에 date를 붙임 ex) /?query=의대&date=2024-11-07
+                const newUrl = `${window.location.pathname}?${searchParams.toString()}`;  // 새로운 url 쿼리 형성  
+                window.history.pushState({}, '', newUrl);                                 // 새로고침 없이 url 동적 변경
             }
         };
+<<<<<<< HEAD
+    
+=======
 
         this.chart = new Chart(ctx, config);
     }
@@ -216,11 +280,7 @@ class IssuePulseChart {
             month: 'long',
             day: 'numeric'
         });
+>>>>>>> master
     }
 }
 
-// 초기화
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Initializing IssuePulseChart...');
-    window.issuePulseChart = new IssuePulseChart();
-});

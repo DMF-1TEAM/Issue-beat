@@ -66,9 +66,9 @@
 </script>
 
 <!-- 핸들러 스크립트 로드 -->
-<script src="{% static 'js/issue-list-handler.js' %}"></script>
+<!-- <script src="{% static 'js/issue-list-handler.js' %}"></script> -->
 <script src="{% static 'js/chart-handler.js' %}"></script>
-<script src="{% static 'js/search-handler.js' %}"></script>
+<!-- <script src="{% static 'js/search-handler.js' %}"></script> -->
 
 <!-- 차트 초기화 -->
 <script>
@@ -80,7 +80,9 @@
         }
         
         // 새로운 차트 초기화
+        // chart-handler.js에 정의한 IssuePulseChart
         const issuePulseChart = new IssuePulseChart();
+        console.log(issuePulseChart)
     });
 </script>
 {% endblock %}
