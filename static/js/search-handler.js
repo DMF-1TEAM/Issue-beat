@@ -20,9 +20,11 @@ class SearchHandler {
 
     async handleSearch(query) {
         try {
+            // console.log(query)
+            this.issueListHandler.searchQuery = query
+
             console.log('Handling search for:', query);
             this.showLoading();
-            
             const response = await fetch(`/api/news/search/?query=${encodeURIComponent(query)}`);
             console.log('Search response:', response);
             const data = await response.json();
@@ -32,15 +34,15 @@ class SearchHandler {
                 throw new Error(data.error || '검색 중 오류가 발생했습니다.');
             }
 
-            // 요약 업데이트
-            if (data.summary) {
-                this.updateSummary(data.summary);
-            }
+            // // 요약 업데이트
+            // if (data.summary) {
+            //     this.updateSummary(data.summary);
+            // }
 
-            // 차트 업데이트
-            if (data.daily_counts) {
-                this.initializeChart(data.daily_counts);
-            }
+            // // 차트 업데이트
+            // if (data.daily_counts) {
+            //     this.initializeChart(data.daily_counts);
+            // }
             
             // 뉴스 목록 업데이트
             if (this.issueListHandler) {
