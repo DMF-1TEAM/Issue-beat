@@ -3,6 +3,7 @@ class NewsListHandler {
         this.newsListContainer = document.getElementById('news-list');
         this.newsCountElement = document.getElementById('news-count');
         this.searchQuery = '';
+        this.currentDate = null;
         this.currentPage = 1;
         this.pageSize = 10;
         this.loading = false;
@@ -19,9 +20,13 @@ class NewsListHandler {
                 this.fetchNews();
             }
         }, { rootMargin: '100px' });  // 100px 여유를 주어 미리 로드
+
+        // chartDateClick 이벤트 리스너 등록
+        document.addEventListener('chartDateClick', (e) => this.handleDateClick(e.detail.date));
     }
 
     async handleSearch(query) {
+        this.currentDate = date;  // 선택된 날짜로 업데이트
         this.searchQuery = query;
         this.resetList();
 
@@ -40,6 +45,20 @@ class NewsListHandler {
         }
     }
 
+    handleDateClick(date) {
+        // 클릭된 날짜가 있을 때만 날짜를 업데이트하고 데이터 로드
+        if (date) {
+            this.currentDate = date;
+            this.resetList();
+            this.fetchNews();
+        } else {
+            // 날짜가 없을 때는 초기화 후 전체 데이터를 로드
+            this.currentDate = null;
+            this.resetList();
+            this.fetchNews();
+        }
+    }
+
     resetList() {
         this.currentPage = 1;
         this.hasNextPage = true;
@@ -53,21 +72,27 @@ class NewsListHandler {
         this.loading = true;
 
         // 캐시에 페이지 데이터가 있는지 확인
-        if (this.cache[this.currentPage]) {
-            this.renderNewsList(this.cache[this.currentPage].news_list);
-            this.newsCountElement.innerText = `총 ${this.cache[this.currentPage].total_count}개 뉴스`;
+        const cacheKey = `${this.searchQuery}_${this.currentDate}_${this.currentPage}`;
+        if (this.cache[cacheKey]) {
+            this.renderNewsList(this.cache[cacheKey].news_list);
+            this.newsCountElement.innerText = `총 ${this.cache[cacheKey].total_count}개 뉴스`;
             this.currentPage++;
-            this.hasNextPage = this.cache[this.currentPage - 1].has_next;
+            this.hasNextPage = this.cache[cacheKey].has_next;
             this.loading = false;
             return;
         }
 
         try {
-            const response = await fetch(`/api/v2/news/?query=${encodeURIComponent(this.searchQuery)}&page=${this.currentPage}&page_size=${this.pageSize}`);
+            // `currentDate`가 없으면 date 파라미터를 제외
+            const url = this.currentDate
+                ? `/api/v2/news/?query=${encodeURIComponent(this.searchQuery)}&date=${this.currentDate}&page=${this.currentPage}&page_size=${this.pageSize}`
+                : `/api/v2/news/?query=${encodeURIComponent(this.searchQuery)}&page=${this.currentPage}&page_size=${this.pageSize}`;
+            
+            const response = await fetch(url);
             const data = await response.json();
-
+    
             if (data.news_list && data.news_list.length > 0) {
-                this.cache[this.currentPage] = data;
+                this.cache[cacheKey] = data;
                 this.renderNewsList(data.news_list);
                 this.newsCountElement.innerText = `총 ${data.total_count}개 뉴스`;
                 this.currentPage++;

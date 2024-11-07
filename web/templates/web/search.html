@@ -29,16 +29,16 @@
     </section>
 
     <!-- 뉴스 목록 섹션 -->
-    <section class="bg-white rounded-lg shadow-sm p-6" style="height: 500px; overflow-y: auto;">
-        <div class="flex justify-between items-center mb-6">
+    <section class="bg-white rounded-lg shadow-sm">
+        <div class="news-header flex justify-between items-center p-6 border-b">
             <h2 class="text-xl font-medium text-gray-900">관련 뉴스</h2>
             <div id="news-count" class="text-sm text-gray-500"></div>
         </div>
-        <div id="news-list" class="space-y-4">
+        <div id="news-list" class="news-list space-y-4 p-6" style="height: 500px; overflow-y: auto;">
             <!-- 뉴스 목록은 자바스크립트로 동적 추가 -->
         </div>
     </section>
-</main>
+</main> 
 
 <!-- 호버 팝업을 위한 스타일 -->
 <style>
