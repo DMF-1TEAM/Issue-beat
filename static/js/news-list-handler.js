@@ -19,7 +19,7 @@ class NewsListHandler {
             if (entry.isIntersecting && this.hasNextPage && !this.loading) {
                 this.fetchNews();
             }
-        }, { rootMargin: '100px' });  // 100px 여유를 주어 미리 로드
+        }, { rootMargin: '100px' });  // 여유를 주어 미리 로드
 
         // chartDateClick 이벤트 리스너 등록
         document.addEventListener('chartDateClick', (e) => this.handleDateClick(e.detail.date));
