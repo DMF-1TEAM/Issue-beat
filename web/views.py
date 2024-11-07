@@ -120,6 +120,7 @@ def news_count_chart_api(request):
         count=Count('id')
     ).order_by('date')
 
+    # 객체를 배열로 전환
     daily_counts_dict = [
         {"date": item['date'].strftime('%Y-%m-%d'), "count": item['count']}
         for item in daily_counts
