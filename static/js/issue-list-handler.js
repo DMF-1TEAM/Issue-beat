@@ -1,35 +1,50 @@
 class IssueListHandler {
-    constructor() {
+    constructor(initialQuery = null) {
         this.newsListContainer = document.getElementById('news-list');
-        this.currentPage = 10;
-        this.hasMore = false;
+        this.currentPage = 1;  // 시작 페이지는 1
+        this.hasMore = true;
         this.isLoading = false;
         this.currentDate = null;
-        this.searchQuery = null;
+        this.searchQuery = initialQuery || window.searchQuery;
         this.initialize();
     }
 
     initialize() {
+        console.log('Initializing infinite scroll'); // 디버깅용
         this.setupInfiniteScroll();
     }
 
     setupInfiniteScroll() {
+        // 스크롤 감지를 위한 옵저버 설정
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting && this.hasMore && !this.isLoading) {
-                    this.loadMoreNews();
-                }
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && this.hasMore && !this.isLoading) {
+                        console.log('Loading more news...'); // 디버깅용
+                        this.loadMoreNews();
+                    }
+                });
             },
-            { threshold: 0.5 }
+            { 
+                root: this.newsListContainer,  // 뉴스 컨테이너를 root로 설정
+                threshold: 0.1,  // 10%만 보여도 로드 시작
+                rootMargin: '20px'  // 하단에서 20px 전에 로드 시작
+            }
         );
 
+        // sentinel 요소 생성 및 관찰
         const sentinel = document.createElement('div');
         sentinel.id = 'scroll-sentinel';
+        sentinel.style.height = '1px';  // 높이 설정
         this.newsListContainer.appendChild(sentinel);
         observer.observe(sentinel);
+        
+        console.log('Infinite scroll setup complete'); // 디버깅용
     }
 
     async updateNewsList(newsData, isInitialLoad = true) {
+        console.log('Updating news list:', { isInitialLoad, newsData }); // 디버깅용
+        
         if (isInitialLoad) {
             this.currentPage = 1;
             this.newsListContainer.innerHTML = '';
@@ -45,50 +60,30 @@ class IssueListHandler {
 
         this.hasMore = newsData.has_next;
         this.updateNewsCount(newsData.total_count);
-    }
-
-    createNewsListHTML(newsList) {
-        return newsList.map(news => `
-            <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 p-4 mb-4">
-                <div class="flex justify-between items-start">
-                    <h3 class="text-lg font-medium text-gray-900 mb-2 flex-grow">${news.title}</h3>
-                    <span class="text-sm text-gray-500 ml-4 whitespace-nowrap">
-                        ${this.formatDate(news.date)}
-                    </span>
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                    <div class="flex items-center space-x-4">
-                        <span class="text-gray-600">${news.press}</span>
-                    </div>
-                    <a href="${news.link}" target="_blank" 
-                       class="text-blue-600 hover:text-blue-800 flex items-center">
-                        원문 보기
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                    </a>
-                </div>
-            </div>
-        `).join('');
+        
+        // sentinel 재설정
+        const sentinel = document.getElementById('scroll-sentinel');
+        if (sentinel) {
+            this.newsListContainer.appendChild(sentinel);
+        }
+        
+        console.log('News list updated, hasMore:', this.hasMore); // 디버깅용
     }
 
     async loadMoreNews() {
-        if (this.isLoading || !this.hasMore) return;
+        if (this.isLoading || !this.hasMore) {
+            console.log('Skip loading: ', { isLoading: this.isLoading, hasMore: this.hasMore }); // 디버깅용
+            return;
+        }
 
+        console.log('Loading more news, page:', this.currentPage + 1); // 디버깅용
         this.isLoading = true;
         this.showLoadingIndicator();
 
         try {
             const nextPage = this.currentPage + 1;
-            let url;
+            const url = `/api/v2/news/?query=${encodeURIComponent(this.searchQuery)}&page=${nextPage}`;
             
-            if (this.currentDate) {
-                url = `/api/news/date/${this.currentDate}?page=${nextPage}`;
-            } else {
-                url = `/api/news/search/?query=${encodeURIComponent(this.searchQuery)}&page=${nextPage}`;
-            }
-
             const response = await fetch(url);
             const data = await response.json();
 
@@ -108,21 +103,22 @@ class IssueListHandler {
         }
     }
 
+
     async handleDateClick(date) {
         this.currentDate = date;
-        this.searchQuery = null;
+        // this.searchQuery = null; 제거 (검색어는 유지되어야 함)
         this.resetList();
-
+    
         try {
-            const response = await fetch(`/api/news/date/${date}`);
+            const response = await fetch(`/api/v2/news/?query=${encodeURIComponent(window.searchQuery)}&date=${date}`);
             const data = await response.json();
-
+    
             if (!response.ok) {
                 throw new Error(data.error || '뉴스를 불러오는 중 오류가 발생했습니다.');
             }
-
+    
             await this.updateNewsList(data);
-
+    
         } catch (error) {
             console.error('Error loading date news:', error);
             this.showError('해당 날짜의 뉴스를 불러오는데 실패했습니다.');
@@ -130,20 +126,29 @@ class IssueListHandler {
     }
 
     async handleSearch(query) {
+        if (!query) {
+            console.error('No search query provided');
+            this.showError('검색어를 입력해주세요.');
+            return;
+        }
+    
+        console.log('Searching with query:', query);  // 디버깅용 로그
         this.searchQuery = query;
         this.currentDate = null;
         this.resetList();
-
+    
         try {
-            const response = await fetch(`/api/news/search/?query=${encodeURIComponent(query)}`);
+            const response = await fetch(`/api/v2/news/?query=${encodeURIComponent(query)}`);
             const data = await response.json();
-
+    
+            console.log('Search response:', data);  // 디버깅용 로그
+    
             if (!response.ok) {
                 throw new Error(data.error || '검색 중 오류가 발생했습니다.');
             }
-
+    
             await this.updateNewsList(data);
-
+    
         } catch (error) {
             console.error('Error searching news:', error);
             this.showError('검색 결과를 불러오는데 실패했습니다.');

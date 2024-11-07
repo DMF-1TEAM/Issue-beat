@@ -85,7 +85,7 @@ def get_summary_api(request):
            'title': news.title,
            'content': news.content
        }
-       for news in news_list
+       for news in news_list[0:200:2]
    ]
 
    llm_service = LLMService()
@@ -109,11 +109,11 @@ def get_news_api(request):
        news_list = News.objects.filter(
            Q(title__icontains=query) | Q(content__icontains=query),
            date=date
-       )
+       ).order_by('-date')
    else:
        news_list = News.objects.filter(
            Q(title__icontains=query) | Q(content__icontains=query)
-       )
+       ).order_by('-date')
 
    paginator = Paginator(news_list, page_size)
    current_page = paginator.page(page)

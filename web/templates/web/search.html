@@ -15,15 +15,15 @@
     <!-- 3단계 요약 섹션 -->
     <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="summary-section">
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">배경</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4"></h3>
             <div id="summary-level-1" class="prose"></div>
         </div>
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">주요내용</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4"></h3>
             <div id="summary-level-2" class="prose"></div>
         </div>
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">현황</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4"></h3>
             <div id="summary-level-3" class="prose"></div>
         </div>
     </section>
@@ -68,7 +68,7 @@
 <!-- 핸들러 스크립트 로드 -->
 <script src="{% static 'js/issue-list-handler.js' %}"></script>
 <script src="{% static 'js/chart-handler.js' %}"></script>
-<script src="{% static 'js/search-handler.js' %}"></script>
+<script src="{% static 'js/summary-handler.js' %}"></script>
 
 <!-- 차트 초기화 -->
 <script>
@@ -81,6 +81,35 @@
         
         // 새로운 차트 초기화
         const issuePulseChart = new IssuePulseChart();
+        // 요약 데이터 불러오기 추가
+        if (searchQuery) {  // searchQuery가 있을 때만 실행
+            const summaryHandler = new SummaryHandler();
+            // 현재 날짜를 YYYY-MM-DD 형식으로 가져오기
+            const today = new Date().toISOString().split('T')[0];
+            summaryHandler.updateSummary(searchQuery, today);  // 검색어와 날짜로 요약 업데이트
+        }
+    });
+</script>
+
+<!-- 차트 클릭 이벤트에 대한 요약 업데이트 -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const summaryHandler = window.summaryHandler;
+        const issueListHandler = new IssueListHandler();
+
+                // 초기 검색어로 뉴스 목록 불러오기
+        if (searchQuery) {
+            issueListHandler.handleSearch(searchQuery);
+        }
+        
+        // 차트 클릭 이벤트 리스너
+        document.addEventListener('chartDateClick', (event) => {
+            const { date } = event.detail;
+            if (searchQuery && date) {
+                summaryHandler.updateSummary(searchQuery, date);
+                issueListHandler.handleDateClick(date);
+            }
+        });
     });
 </script>
 {% endblock %}

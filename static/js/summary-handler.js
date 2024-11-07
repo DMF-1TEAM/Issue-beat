@@ -31,7 +31,7 @@ class SummaryHandler {
     async updateSummary(date) {
         try {
             this.showLoading();
-            const response = await fetch(`/api/summary/${date}/`);
+            const response = await fetch(`/api/v2/news/summary/?query=${query}&date=${date}`);
             const data = await response.json();
 
             if (data.success) {
@@ -66,10 +66,10 @@ class SummaryHandler {
             <div class="space-y-4">
                 <div class="flex items-center space-x-2">
                     ${this.summaryIcons.mainContent}
-                    <h3 class="text-lg font-medium text-gray-900">주요내용</h3>
+                    <h3 class="text-lg font-medium text-gray-900">핵심 내용</h3>
                 </div>
                 <div class="text-gray-600 leading-relaxed">
-                    ${this.formatSummaryText(summaryData.main_content)}
+                    ${this.formatSummaryText(summaryData.core_content)}
                 </div>
             </div>
         `;
@@ -79,14 +79,32 @@ class SummaryHandler {
             <div class="space-y-4">
                 <div class="flex items-center space-x-2">
                     ${this.summaryIcons.currentStatus}
-                    <h3 class="text-lg font-medium text-gray-900">현황</h3>
+                    <h3 class="text-lg font-medium text-gray-900">결론</h3>
                 </div>
                 <div class="text-gray-600 leading-relaxed">
-                    ${this.formatSummaryText(summaryData.current_status)}
+                    ${this.formatSummaryText(summaryData.conclusion)}
                 </div>
             </div>
         `;
     }
+
+    // views.py -> 검색어 및 데이터 불러오기
+    async updateSummary(query, date) {
+        try {
+            this.showLoading();
+            const response = await fetch(`/api/v2/news/summary/?query=${encodeURIComponent(query)}&date=${date}`);
+            const data = await response.json();
+    
+            // API 응답이 바로 summary 데이터이므로 .data 참조 제거
+            this.displaySummary(data);
+        } catch (error) {
+            this.showError('요약을 불러오는 중 오류가 발생했습니다.');
+            console.error('Summary error:', error);
+        } finally {
+            this.hideLoading();
+        }
+    }
+
 
     formatSummaryText(text) {
         // 줄바꿈을 HTML로 변환
