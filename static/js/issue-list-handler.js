@@ -6,7 +6,6 @@ class IssueListHandler {
         this.isLoading = false;
         this.currentDate = null;
         this.searchQuery = null;
-        
         this.initialize();
     }
 
