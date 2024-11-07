@@ -3,25 +3,30 @@ class NewsListHandler {
         this.newsListContainer = document.getElementById('news-list');
         this.newsCountElement = document.getElementById('news-count');
         this.searchQuery = '';
-        this.currentPage = 1;  // 초기 페이지 번호
+        this.currentPage = 1;
         this.pageSize = 10;
         this.loading = false;
         this.hasNextPage = true;
+        this.cache = {};  // 캐시 객체 추가
 
         // 초기 데이터 로드
         this.fetchNews();
 
-        // 스크롤 이벤트 등록
-        window.addEventListener('scroll', () => this.handleScroll());
+        // Intersection Observer 설정
+        this.observer = new IntersectionObserver((entries) => {
+            const entry = entries[0];
+            if (entry.isIntersecting && this.hasNextPage && !this.loading) {
+                this.fetchNews();
+            }
+        }, { rootMargin: '100px' });  // 100px 여유를 주어 미리 로드
     }
 
     async handleSearch(query) {
         this.searchQuery = query;
-        this.currentDate = null;
         this.resetList();
 
         try {
-            const response = await fetch(`/api/news/search/?query=${encodeURIComponent(query)}`);
+            const response = await fetch(`/api/v2/news/?query=${encodeURIComponent(query)}`);
             const data = await response.json();
 
             if (!response.ok) {
@@ -29,7 +34,6 @@ class NewsListHandler {
             }
 
             await this.updateNewsList(data);
-
         } catch (error) {
             console.error('Error searching news:', error);
             this.showError('검색 결과를 불러오는데 실패했습니다.');
@@ -38,24 +42,38 @@ class NewsListHandler {
 
     resetList() {
         this.currentPage = 1;
-        this.hasMore = false;
+        this.hasNextPage = true;
+        this.loading = false;
+        this.cache = {};  // 캐시 초기화
         this.newsListContainer.innerHTML = '';
     }
 
-    // API에서 뉴스 목록을 가져오는 메서드
     async fetchNews() {
         if (this.loading || !this.hasNextPage) return;
         this.loading = true;
+
+        // 캐시에 페이지 데이터가 있는지 확인
+        if (this.cache[this.currentPage]) {
+            this.renderNewsList(this.cache[this.currentPage].news_list);
+            this.newsCountElement.innerText = `총 ${this.cache[this.currentPage].total_count}개 뉴스`;
+            this.currentPage++;
+            this.hasNextPage = this.cache[this.currentPage - 1].has_next;
+            this.loading = false;
+            return;
+        }
 
         try {
             const response = await fetch(`/api/v2/news/?query=${encodeURIComponent(this.searchQuery)}&page=${this.currentPage}&page_size=${this.pageSize}`);
             const data = await response.json();
 
             if (data.news_list && data.news_list.length > 0) {
+                this.cache[this.currentPage] = data;
                 this.renderNewsList(data.news_list);
-                this.newsCountElement.innerText = `총 ${data.total_count}개 뉴스`; // 뉴스 개수 업데이트
+                this.newsCountElement.innerText = `총 ${data.total_count}개 뉴스`;
                 this.currentPage++;
                 this.hasNextPage = data.has_next;
+            } else {
+                this.hasNextPage = false;
             }
         } catch (error) {
             console.error('뉴스 데이터를 가져오는 중 오류 발생:', error);
@@ -64,9 +82,8 @@ class NewsListHandler {
         }
     }
 
-    // 뉴스 목록을 화면에 추가하는 메서드
     renderNewsList(newsList) {
-        newsList.forEach(news => {
+        newsList.forEach((news, index) => {
             const newsItem = document.createElement('div');
             newsItem.classList.add('bg-white', 'rounded-lg', 'shadow-sm', 'hover:shadow-md', 'transition-shadow', 'duration-200', 'p-4', 'mb-4');
 
@@ -93,15 +110,11 @@ class NewsListHandler {
             `;
 
             this.newsListContainer.appendChild(newsItem);
-        });
-    }
 
-    // 스크롤 이벤트 핸들러
-    handleScroll() {
-        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-        // 스크롤이 끝에 가까워졌을 때만 데이터 로드
-        if (scrollTop + clientHeight >= scrollHeight - 100 && this.hasNextPage && !this.loading) {
-            this.fetchNews();
-        }
+            // 마지막 뉴스 아이템에 대해 Intersection Observer 추가
+            if (index === newsList.length - 1) {
+                this.observer.observe(newsItem);
+            }
+        });
     }
 }
