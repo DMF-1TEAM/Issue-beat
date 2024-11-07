@@ -66,21 +66,17 @@
 </script>
 
 <!-- 핸들러 스크립트 로드 -->
-<script src="{% static 'js/issue-list-handler.js' %}"></script>
-<script src="{% static 'js/chart-handler.js' %}"></script>
-<script src="{% static 'js/search-handler.js' %}"></script>
+<script src="{% static 'js/news-list-handler.js' %}"></script>
+<!-- <script src="{% static 'js/chart-handler.js' %}"></script>
+<script src="{% static 'js/search-handler.js' %}"></script> -->
 
-<!-- 차트 초기화 -->
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // 기존 차트 인스턴스 제거
-        const existingChart = Chart.getChart('timeline-chart');
-        if (existingChart) {
-            existingChart.destroy();
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchQuery = "{{ query|escapejs }}";
+        if (searchQuery) {
+            const newsListHandler = new NewsListHandler(); 
+            newsListHandler.fetchNews();
         }
-        
-        // 새로운 차트 초기화
-        const issuePulseChart = new IssuePulseChart();
     });
 </script>
 {% endblock %}
