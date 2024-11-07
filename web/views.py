@@ -58,9 +58,8 @@ from .services.daily_issue_service import DailyIssueService
 @api_view(['GET'])
 def news_count_chart_api(request):
     """
-    - request 
+    - request
     /api/v2/news/?query=검색어
-
     - response
     [
         {
@@ -81,26 +80,21 @@ def news_count_chart_api(request):
         }
     ]
     """
-
     query = request.GET.get('query', '').strip()
-
     # 뉴스 검색
     news_list = News.objects.filter(
         Q(title__icontains=query) | Q(content__icontains=query)
     ).order_by('-date')
-
     # 일별 통계 계산
     daily_counts = news_list.values('date').annotate(
         count=Count('id')
     ).order_by('date')
-
-    daily_counts_dict = {
-        item['date'].strftime('%Y-%m-%d'): item['count'] 
+    # 객체를 배열로 전환
+    daily_counts_dict = [
+        {"date": item['date'].strftime('%Y-%m-%d'), "count": item['count']}
         for item in daily_counts
-    }
-
+    ]
     return Response(daily_counts_dict)
-
 
 # 2. 뉴스 요약 생성 (/api/v2/news/summary/?query=keyword&date=2024-11-01)
 @api_view(['GET'])
