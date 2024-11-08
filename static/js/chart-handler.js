@@ -2,7 +2,8 @@ class IssuePulseChart {
 
     constructor() {
         this.chart = null;
-        this.selectedDate = null; 
+        this.selectedDate = null;
+        this.searchQuery = new URLSearchParams(window.location.search).get('query') || '';        
         this.initChart();
         this.fetchDataAndUpdateChart();
         this.setupClickEvent();
@@ -38,57 +39,52 @@ class IssuePulseChart {
         });
     }
 
-    // 차트 데이터 api 호출
     fetchDataAndUpdateChart() {
-        fetch(`/api/v2/news/chart/?query=${encodeURIComponent(searchQuery)}`)
+        if (!this.searchQuery) {
+            console.warn('검색어가 없습니다.');
+            return;
+        }
+
+        fetch(`/api/v2/news/chart/?query=${encodeURIComponent(this.searchQuery)}`)
             .then(response => response.json())
             .then(data => {
-
-                console.log(data);
+                console.log('차트 데이터:', data);
                 if (Array.isArray(data)) {
-                    const chartData = data.map(item => item.count);
-                    // 차트 처리 코드
+                    const dates = data.map(item => item.date);
+                    const counts = data.map(item => item.count);
+                    
+                    // 차트 업데이트
+                    this.chart.data.labels = dates;
+                    this.chart.data.datasets[0].data = counts;
+                    this.chart.update();
                 } else {
-                    console.error("Data is not an array:", data);
+                    console.error("데이터 형식 오류:", data);
                 }
-                
-                const dates = data.map(item => item.date);
-                const counts = data.map(item => item.count);
-
-  
-                // 차트 업데이트
-                this.chart.data.labels = dates;
-                this.chart.data.datasets[0].data = counts;
-                this.chart.update();
             })
-            .catch(error => console.error('Error fetching chart data:', error));
+            .catch(error => console.error('차트 데이터 가져오기 오류:', error));
     }
 
-    // 클릭 이벤트 설정
     setupClickEvent() {
         this.chart.canvas.onclick = (evt) => {
-
-            // 클릭 위치와 가장 가까운 데이터 포인트 찾음.
             const points = this.chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-            console.log(points)
 
-            // 포인터가 있으면
             if (points.length) {          
                 const firstPoint = points[0];
-                console.log(firstPoint)
                 const date = this.chart.data.labels[firstPoint.index];
                 
-                // 커스텀 이벤트 발생시키기만 함
+                // searchQuery를 이벤트 데이터에 포함
                 const clickEvent = new CustomEvent('chartDateClick', {
-                    detail: { date }
+                    detail: { 
+                        date,
+                        query: this.searchQuery 
+                    }
                 });
-                document.dispatchEvent(clickEvent);    // 다른 스크립트에서 document.addEventListener를 통해 실행
+                document.dispatchEvent(clickEvent);
                 
-                // URL 업데이트
-                const searchParams = new URLSearchParams(window.location.search);       // 현재 url 쿼리를 문자열을 객체화
-                searchParams.set('date', date);                                         // url 쿼리에 date를 붙임 ex) /?query=의대&date=2024-11-07
-                const newUrl = `${window.location.pathname}?${searchParams.toString()}`;  // 새로운 url 쿼리 형성  
-                window.history.pushState({}, '', newUrl);                                 // 새로고침 없이 url 동적 변경
+                const searchParams = new URLSearchParams(window.location.search);
+                searchParams.set('date', date);
+                const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
+                window.history.pushState({}, '', newUrl);
             }
         };
     }
