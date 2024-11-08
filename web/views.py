@@ -115,6 +115,7 @@ def news_count_chart_api(request):
     news_list = News.objects.filter(
         Q(title__icontains=query) | Q(content__icontains=query)
     ).order_by('-date')
+    # print('news_list:\n',news_list[:10])
 
     # 시작 끝 날짜 
     min_date = news_list.earliest('date').date
@@ -137,25 +138,39 @@ def agg_by_date(news_list, group_by, min_date, max_date):
     data_counts = []
 
     # 기준에 따른 날짜 범위 생성
-    print(group_by)
+    # print(group_by)
     if group_by == '1day':
+
         date_range = [min_date + timedelta(days=i) for i in range((max_date - min_date).days + 1)]
-        news_data = news_list.values('date').annotate(count=Count('id')).order_by('date')
+        
+        news_data = (news_list
+                        .values('date')
+                        .annotate(count=Count('id'))
+                        .order_by('date'))
+        
         news_data_dict = {entry['date']: entry['count'] for entry in news_data}
+
         for single_date in date_range:
             date_labels.append(single_date.strftime('%Y-%m-%d'))
             data_counts.append(news_data_dict.get(single_date, 0))
 
     elif group_by == '1week':
+
         date_range = []
         current_date = min_date
+
         while current_date <= max_date:
             date_range.append(current_date)
             current_date += timedelta(weeks=1)
+
         news_data = (news_list
-                     .extra(select={'week': "strftime('%Y-%m-%d', date, 'weekday 0', '-6 days')"})
-                     .values('week').annotate(count=Count('id')).order_by('week'))
-        news_data_dict = {entry['week']: entry['count'] for entry in news_data}
+                     .filter(date__range=[min_date, max_date])
+                     .annotate(week=TruncWeek('date'))
+                     .values('week')
+                     .annotate(count=Count('id'))
+                     .order_by('week'))
+
+        news_data_dict = {entry['week'].strftime('%Y-%m-%d'): entry['count'] for entry in news_data}
 
         for single_week in date_range:
             week_str = single_week.strftime('%Y-%m-%d')
@@ -163,15 +178,22 @@ def agg_by_date(news_list, group_by, min_date, max_date):
             data_counts.append(news_data_dict.get(week_str, 0))
 
     elif group_by == '1month':
+
         date_range = []
         current_date = min_date.replace(day=1)
+
         while current_date <= max_date:
             date_range.append(current_date)
             current_date = (current_date.replace(day=28) + timedelta(days=4)).replace(day=1)
+        
         news_data = (news_list
-                     .extra(select={'month': "strftime('%Y-%m', date)"})
-                     .values('month').annotate(count=Count('id')).order_by('month'))
-        news_data_dict = {entry['month']: entry['count'] for entry in news_data}
+                     .filter(date__range=[min_date, max_date])
+                     .annotate(month=TruncMonth('date'))
+                     .values('month')
+                     .annotate(count=Count('id'))
+                     .order_by('month'))
+        
+        news_data_dict = {entry['month'].strftime('%Y-%m'): entry['count'] for entry in news_data}
 
         for single_month in date_range:
             month_str = single_month.strftime('%Y-%m')
@@ -179,7 +201,6 @@ def agg_by_date(news_list, group_by, min_date, max_date):
             data_counts.append(news_data_dict.get(month_str, 0))
 
     return date_labels, data_counts
-
 
 # 2. 뉴스 요약 생성 (/api/v2/news/summary/?query=keyword&date=2024-11-01)
 @api_view(['GET'])

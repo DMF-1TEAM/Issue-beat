@@ -99,6 +99,7 @@ class IssuePulseChart {
     setupFilterEvent() {
         // 필터 html 요소 가져오기
         const filterSelect = document.getElementById('date_filter');
+        console.log("add event")
         
         // #date_filter가 존재하는지 확인
         if (filterSelect) {
