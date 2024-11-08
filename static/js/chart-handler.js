@@ -2,6 +2,7 @@ class IssuePulseChart {
 
     constructor() {
         this.chart = null;
+        this.groupBy = '1day';
         this.selectedDate = null;
         this.searchQuery = new URLSearchParams(window.location.search).get('query') || '';        
         this.initChart();
