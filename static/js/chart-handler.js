@@ -25,7 +25,7 @@ class IssuePulseChart {
                     borderWidth: 2,
                     tension: 0.4,
                     fill: true,
-                    pointRadius: 4,
+                    pointRadius: 2,
                     pointHoverRadius: 6
                 }]
             },
