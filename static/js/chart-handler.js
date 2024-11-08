@@ -7,6 +7,11 @@ class IssuePulseChart {
         this.initChart();
         this.fetchDataAndUpdateChart();
         this.setupClickEvent();
+        // 이벤트 발생 시 데이터 전달을 위한 상태 추가
+        this.currentState = {
+            date: null,
+            query: this.searchQuery
+        }
     }
 
     // 차트 초기화
@@ -65,27 +70,42 @@ class IssuePulseChart {
     }
 
     setupClickEvent() {
+        let clickTimeout;
+
         this.chart.canvas.onclick = (evt) => {
             const points = this.chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
 
             if (points.length) {          
                 const firstPoint = points[0];
                 const date = this.chart.data.labels[firstPoint.index];
+
+                // 이전 상태와 비교
+                if (this.currentState.date === date) {
+                    return; // 같은 날짜 중복 클릭 방지
+                }
                 
-                // searchQuery를 이벤트 데이터에 포함
-                const clickEvent = new CustomEvent('chartDateClick', {
-                    detail: { 
-                        date,
-                        query: this.searchQuery 
-                    }
-                });
-                document.dispatchEvent(clickEvent);
+                this.currentState.date = date;
+
+                // 디바운싱 적용
+                if (clickTimeout) {
+                    clearTimeout(clickTimeout);
+                }
+                
+                clickTimeout = setTimeout(() => {
+                    const clickEvent = new CustomEvent('chartDateClick', {
+                        detail: { 
+                            date,
+                            query: this.searchQuery 
+                        }
+                    });
+                    document.dispatchEvent(clickEvent);
                 
                 const searchParams = new URLSearchParams(window.location.search);
                 searchParams.set('date', date);
                 const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
                 window.history.pushState({}, '', newUrl);
-            }
-        };
-    }
+            }, 300);
+        }
+    };
+}
 }

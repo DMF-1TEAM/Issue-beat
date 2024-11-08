@@ -46,32 +46,46 @@ class SummaryHandler {
                 console.warn('필요한 데이터가 없습니다:', { date, query });
             }
         });
+        this.summaryCache = new Map();
+
+        document.addEventListener('chartDateClick', this.handleChartDateClick.bind(this));
     }
+
+    handleChartDateClick(e) {
+        const { date, query } = e.detail;
+        if (date && query) {
+            const cacheKey = `${query}-${date}`;
+            
+            // 캐시된 데이터가 있는지 확인
+            if (this.summaryCache.has(cacheKey)) {
+                this.displaySummary(this.summaryCache.get(cacheKey));
+                return;
+            }
+            
+            this.updateSummary(query, date);
+        }
+    }
+    
 
     async updateSummary(query, date) {
         try {
-            console.log(`요약 정보 요청: query=${query}, date=${date}`);
             this.showLoading();
-
-            const url = `/api/v2/news/summary/?query=${encodeURIComponent(query)}&date=${encodeURIComponent(date)}`;
-            const response = await fetch(url);
+            const response = await fetch(`/api/v2/news/summary/?query=${encodeURIComponent(query)}&date=${encodeURIComponent(date)}`);
             const data = await response.json();
             
-            console.log('받은 요약 데이터:', data);
-            
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            if (data.error) {
-                throw new Error(data.error);
-            }
+            // 캐시에 저장
+            const cacheKey = `${query}-${date}`;
+            this.summaryCache.set(cacheKey, data);
             
             this.displaySummary(data);
-
         } catch (error) {
-            console.error('요약 정보 가져오기 실패:', error);
             this.showError('요약을 불러오는 중 오류가 발생했습니다.');
+            console.error('Summary error:', error);
+        } finally {
+            this.hideLoading();
         }
     }
+
 
     displaySummary(summaryData) {
         console.log('Displaying summary data:', summaryData);
