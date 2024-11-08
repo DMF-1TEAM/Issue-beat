@@ -29,7 +29,7 @@ class IssuePulseChart {
                     borderWidth: 2,
                     tension: 0.4,
                     fill: true,
-                    pointRadius: 4,
+                    pointRadius: 2,
                     pointHoverRadius: 6
                 }]
             },
@@ -57,7 +57,7 @@ class IssuePulseChart {
                 if (Array.isArray(data)) {
                     const dates = data.map(item => item.date);
                     const counts = data.map(item => item.count);
-                    
+                  
                     // 차트 업데이트
                     this.chart.data.labels = dates;
                     this.chart.data.datasets[0].data = counts;
