@@ -47,3 +47,20 @@ class SearchHistory(models.Model):
 
     def __str__(self):
         return f"{self.keyword} ({self.count})"
+    
+class NewsSummary(models.Model):
+    keyword = models.CharField(max_length=200)
+    date = models.DateField(null=True, blank=True)
+    background = models.TextField()
+    core_content = models.TextField()
+    conclusion = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['keyword', 'date']
+        indexes = [
+            models.Index(fields=['keyword', 'date']),
+        ]
+    
+    def __str__(self):
+        return f"{self.keyword} - {self.date or 'overall'}"
