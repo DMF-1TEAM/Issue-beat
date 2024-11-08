@@ -18,7 +18,6 @@ def home(request):
     """홈 페이지"""
     trending_keywords = []  # 필요한 데이터를 여기에 추가하세요.
     return render(request, 'web/home.html', {'trending_keywords': trending_keywords})
-<<<<<<< HEAD
 
 def search_view(request):
     query = request.GET.get('query', '').strip()
@@ -69,55 +68,6 @@ def get_hover_summary(request, date):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
-=======
-
-def search_view(request):
-    query = request.GET.get('query', '').strip()
-    if not query:
-        return render(request, 'web/search.html')  # 검색 페이지 템플릿 렌더링
-
-    search_history, created = SearchHistory.objects.get_or_create(
-        keyword=query,
-        defaults={'count': 1}
-    )
-    if not created:
-        search_history.count += 1
-        search_history.save()
-
-    return render(request, 'web/search.html', {'query': query})
-
-# 데이터를 받아서 각 API로 전달하는 기본 뷰
-# def get(self, request):
-#     query = request.GET.get('query', '').strip()
-#     page = int(request.GET.get('page', 1))
-#     page_size = int(request.GET.get('page_size', 10))
-
-#     if not query:
-#         return Response({'error': '검색어를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
-
-#     return Response({
-#         'query': query,
-#         'page': page,
-#         'page_size': page_size
-#     })
-
-#        if not query:
-#            return Response({'error': '검색어를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
-           
-#        return self._process_request(request, query, page, page_size)
-   
-#    def _process_request(self, request, query, page, page_size):
-#        try:
-#            return Response({
-#                'success': True,
-#                'query': query
-#            })
-#        except Exception as e:
-#            return Response(
-#                {'error': '검색 중 오류가 발생했습니다.', 'detail': str(e)}, 
-#                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-
->>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0
 
 # 세개의 영역에 보내줘야하는 데이터
 
@@ -133,31 +83,15 @@ def search_view(request):
 # 1. 날짜별 뉴스건수 (/api/v2/news/chart/?query=keyword&groupby=day)
 @api_view(['GET'])
 def news_count_chart_api(request):
-    """
-    - request
-    /api/v2/news/?query=검색어
-    - response
-    [
-        {
-            "date": "2024-11-01",
-            "count": 9
-        },
-        {
-            "date": "2024-11-02",
-            "count": 6
-        },
-        {
-            "date": "2024-11-03",
-            "count": 5
-        },
-        {
-            "date": "2024-11-04",
-            "count": 2
-        }
-    ]
-    """
+
     query = request.GET.get('query', '').strip()
+    start_date_str = request.GET.get('start_date', None)
+    end_date_str = request.GET.get('end_date', None)
     group_by = request.GET.get('group_by', '1day').strip()
+
+    # 날짜 범위 파라미터 -> datetime 객체로 변환 
+    start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else None
+    end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date() if end_date_str else None
 
     # 뉴스 검색: query를 사용해 제목과 내용에서 검색어 포함된 뉴스만 필터링
     news_list = News.objects.filter(
@@ -165,7 +99,13 @@ def news_count_chart_api(request):
     ).order_by('-date')
     # print('news_list:\n',news_list[:10])
 
-    # 시작 끝 날짜 
+    # 지정된 날짜 범위로 필터링
+    if start_date:
+        news_list = news_list.filter(date__gte=start_date)
+    if end_date:
+        newS_list = news_list.filter(date__lte=end_date)
+
+    # 시작 & 끝 날짜 
     min_date = news_list.earliest('date').date
     max_date = news_list.latest('date').date
 
@@ -180,6 +120,7 @@ def news_count_chart_api(request):
 
     return Response(chart_data)
 
+# 1+ 날짜 집계 함수
 def agg_by_date(news_list, group_by, min_date, max_date):
     date_labels = []
     data_counts = []
@@ -249,10 +190,6 @@ def agg_by_date(news_list, group_by, min_date, max_date):
 
     return date_labels, data_counts
 
-<<<<<<< HEAD
-=======
-  
->>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0
 # 2. 뉴스 요약 생성 (/api/v2/news/summary/?query=keyword&date=2024-11-01)
 @api_view(['GET'])
 def get_summary_api(request):
@@ -399,18 +336,6 @@ def get_news_api(request):
         'has_next': current_page.has_next(),
         'has_previous': current_page.has_previous()
     })
-<<<<<<< HEAD
-
-def home(request):
-    """홈 페이지"""
-    try:
-        trending_response = get_trending_keywords_api(request)
-        trending_keywords = trending_response.data.get('keywords', [])
-    except Exception:
-        trending_keywords = []
-    return render(request, 'web/home.html', {'trending_keywords': trending_keywords})
-=======
->>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0
 
 # 트렌딩 키워드 API
 @api_view(['GET'])
@@ -493,8 +418,4 @@ def get_hover_summary(request, date):
                'detail': str(e) if settings.DEBUG else None
            }, 
            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-<<<<<<< HEAD
        )
-=======
-       )
->>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0

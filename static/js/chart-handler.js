@@ -1,13 +1,28 @@
 class IssuePulseChart {
-
     constructor() {
         this.chart = null;
-        this.selectedDate = null;
+        this.startDate = document.getElementById("startDate").value;        // 날짜 범위 생성
+        this.endDate = document.getElementById("endDate").value;            // 날짜 범위 생성
+        this.groupBy="1day";                                                // 날짜 기준 집계
+        this.selectedDate = null;                                           // 특정 일자 클릭
         this.searchQuery = new URLSearchParams(window.location.search).get('query') || '';        
+        
         this.initChart();
         this.fetchDataAndUpdateChart();
         this.setupClickEvent();
-        this.setupFilterEvent()
+        this.setupFilterEvent();
+        this.setupDateRangeEvent();
+
+        // Date picker 초기화
+        flatpickr("#startDate", { 
+            dateFormat: "Y-m-d", 
+            onChange: this.handleDateChange.bind(this) // 날짜가 변경될 때 이벤트 핸들러 실행
+        });
+        flatpickr("#endDate", { 
+            dateFormat: "Y-m-d", 
+            onChange: this.handleDateChange.bind(this) // 날짜가 변경될 때 이벤트 핸들러 실행
+        });
+
         // 이벤트 발생 시 데이터 전달을 위한 상태 추가
         this.currentState = {
             date: null,
@@ -51,7 +66,11 @@ class IssuePulseChart {
             return;
         }
 
-        fetch(`/api/v2/news/chart/?query=${encodeURIComponent(searchQuery)}&group_by=${this.groupBy}`)
+        const startDate = this.startDate || '';
+        const endDate = this.endDate || '';
+
+        // 날짜 범위 관련 파라미터 추가
+        fetch(`/api/v2/news/chart/?query=${encodeURIComponent(searchQuery)}&group_by=${this.groupBy}&start_date${startDate}&end_date=${endDate}`)
             .then(response => response.json())
             .then(data => {
                 console.log('차트 데이터:', data);
@@ -70,12 +89,45 @@ class IssuePulseChart {
             .catch(error => console.error('차트 데이터 가져오기 오류:', error));
     }
 
+    setupDateRangeEvent(){
+        const startDateInput = document.getElementById("startDate");
+        const endDateInput = document.getElementById("endDate");
+        
+        if (startDateInput && endDateInput){
+            startDateInput.addEventListener("change", (event) => {
+                this.startDate = event.target.value;
+                this.fetchDataAndUpdateChart();
+            });
+
+            endDateInput.adEventListener("change", (event) => {
+                this.endDate = event.target.value;
+                this.fetchDataAndUpdateChart()
+            });
+        } else {
+            console.error("날짜 범위 필터 요소를 찾을 수 없습니다.")
+        }
+        
+    }
+
+    handleDateChange(selectedDates, dateStr, instance) {
+        if (instance.element.id === "startDate") {
+            this.startDate = dateStr;
+        } else if (instance.element.id === "endDate") {
+            this.endDate = dateStr;
+        }
+
+        // 두 날짜가 모두 선택된 경우에만 차트를 업데이트
+        if (this.startDate && this.endDate) {
+            this.fetchDataAndUpdateChart();
+        }
+    }
+
     setupClickEvent() {
         let clickTimeout;
 
         this.chart.canvas.onclick = (evt) => {
             const points = this.chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-
+            console.log(points)
             if (points.length) {          
                 const firstPoint = points[0];
                 const date = this.chart.data.labels[firstPoint.index];
@@ -105,11 +157,11 @@ class IssuePulseChart {
                 searchParams.set('date', date);
                 const newUrl = `${window.location.pathname}?${searchParams.toString()}`;
                 window.history.pushState({}, '', newUrl);
-            }, 300);
-        }
-    };
+                }, 300);
+            }
+        };
     }
-    
+  
     setupFilterEvent() {
         // 필터 html 요소 가져오기
         const filterSelect = document.getElementById('date_filter');
@@ -125,4 +177,5 @@ class IssuePulseChart {
             console.error("#date_filter 요소를 찾을 수 없습니다.");
         }
     }
+
 }
