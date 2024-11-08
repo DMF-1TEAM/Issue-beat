@@ -1,4 +1,5 @@
 class IssuePulseChart {
+
     constructor() {
         this.chart = null;
         this.selectedDate = null;

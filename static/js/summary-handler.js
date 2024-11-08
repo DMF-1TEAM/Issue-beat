@@ -126,6 +126,24 @@ class SummaryHandler {
         `;
     }
 
+    // views.py -> 검색어 및 데이터 불러오기
+    async updateSummary(query, date) {
+        try {
+            this.showLoading();
+            const response = await fetch(`/api/v2/news/summary/?query=${encodeURIComponent(query)}&date=${date}`);
+            const data = await response.json();
+    
+            // API 응답이 바로 summary 데이터이므로 .data 참조 제거
+            this.displaySummary(data);
+        } catch (error) {
+            this.showError('요약을 불러오는 중 오류가 발생했습니다.');
+            console.error('Summary error:', error);
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+
     formatSummaryText(text) {
         return text.replace(/\n/g, '<br>');
     }

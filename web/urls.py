@@ -9,6 +9,10 @@ urlpatterns = [
     # 웹 페이지 URL
     path('', views.home, name='home'),
     path('search/', views.search_view, name='search'),
+<<<<<<< HEAD
+=======
+    
+>>>>>>> origin/master
     # v2 뉴스 검색 관련 API
     path('api/v2/news/chart/', views.news_count_chart_api, name='news_count_chart_api'),
     path('api/v2/news/summary/', views.get_summary_api, name='get_summary_api'),
