@@ -18,6 +18,7 @@ def home(request):
     """홈 페이지"""
     trending_keywords = []  # 필요한 데이터를 여기에 추가하세요.
     return render(request, 'web/home.html', {'trending_keywords': trending_keywords})
+<<<<<<< HEAD
 
 def search_view(request):
     query = request.GET.get('query', '').strip()
@@ -68,6 +69,55 @@ def get_hover_summary(request, date):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
+=======
+
+def search_view(request):
+    query = request.GET.get('query', '').strip()
+    if not query:
+        return render(request, 'web/search.html')  # 검색 페이지 템플릿 렌더링
+
+    search_history, created = SearchHistory.objects.get_or_create(
+        keyword=query,
+        defaults={'count': 1}
+    )
+    if not created:
+        search_history.count += 1
+        search_history.save()
+
+    return render(request, 'web/search.html', {'query': query})
+
+# 데이터를 받아서 각 API로 전달하는 기본 뷰
+# def get(self, request):
+#     query = request.GET.get('query', '').strip()
+#     page = int(request.GET.get('page', 1))
+#     page_size = int(request.GET.get('page_size', 10))
+
+#     if not query:
+#         return Response({'error': '검색어를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+
+#     return Response({
+#         'query': query,
+#         'page': page,
+#         'page_size': page_size
+#     })
+
+#        if not query:
+#            return Response({'error': '검색어를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+           
+#        return self._process_request(request, query, page, page_size)
+   
+#    def _process_request(self, request, query, page, page_size):
+#        try:
+#            return Response({
+#                'success': True,
+#                'query': query
+#            })
+#        except Exception as e:
+#            return Response(
+#                {'error': '검색 중 오류가 발생했습니다.', 'detail': str(e)}, 
+#                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+
+>>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0
 
 # 세개의 영역에 보내줘야하는 데이터
 
@@ -78,6 +128,7 @@ def get_hover_summary(request, date):
 # 3. 뉴스 목록(페이지네이션)
 #     3-1. 전체 기간 뉴스 목록
 #     3-2. 차트 클릭시 해당 날짜 뉴스 목록
+
 
 # 1. 날짜별 뉴스건수 (/api/v2/news/chart/?query=keyword&groupby=day)
 @api_view(['GET'])
@@ -128,7 +179,6 @@ def news_count_chart_api(request):
     ]
 
     return Response(chart_data)
-
 
 def agg_by_date(news_list, group_by, min_date, max_date):
     date_labels = []
@@ -199,6 +249,10 @@ def agg_by_date(news_list, group_by, min_date, max_date):
 
     return date_labels, data_counts
 
+<<<<<<< HEAD
+=======
+  
+>>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0
 # 2. 뉴스 요약 생성 (/api/v2/news/summary/?query=keyword&date=2024-11-01)
 @api_view(['GET'])
 def get_summary_api(request):
@@ -345,6 +399,7 @@ def get_news_api(request):
         'has_next': current_page.has_next(),
         'has_previous': current_page.has_previous()
     })
+<<<<<<< HEAD
 
 def home(request):
     """홈 페이지"""
@@ -354,6 +409,8 @@ def home(request):
     except Exception:
         trending_keywords = []
     return render(request, 'web/home.html', {'trending_keywords': trending_keywords})
+=======
+>>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0
 
 # 트렌딩 키워드 API
 @api_view(['GET'])
@@ -375,16 +432,6 @@ def get_trending_keywords_api(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-def search_view(request):
-    query = request.GET.get('query', '').strip()
-    if not query:
-        return render(request, 'web/search.html')  
-
-    # 검색 기록 업데이트 함수 호출
-    update_search_history(query)
-    
-    return render(request, 'web/search.html', {'query': query})
-
 def update_search_history(keyword):
     """검색 기록을 업데이트하거나 생성하는 함수"""
     try:
@@ -401,7 +448,6 @@ def update_search_history(keyword):
     except Exception as e:
         print(f"Error updating search history: {e}")
         return None
-
 
 @api_view(['GET'])
 def get_search_suggestions_api(request):
@@ -447,4 +493,8 @@ def get_hover_summary(request, date):
                'detail': str(e) if settings.DEBUG else None
            }, 
            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+<<<<<<< HEAD
        )
+=======
+       )
+>>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0
