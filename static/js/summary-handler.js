@@ -26,19 +26,58 @@ class SummaryHandler {
                 </svg>
             `
         };
+
+        // DOM 요소 확인
+        Object.entries(this.summaryContainers).forEach(([key, element]) => {
+            if (!element) {
+                console.error(`${key} 컨테이너를 찾을 수 없습니다.`);
+            }
+        });
+        
+        document.addEventListener('chartDateClick', (e) => {
+            console.log('차트 클릭 이벤트:', e.detail);
+            
+            // query를 이벤트 데이터에서 가져옴
+            const { date, query } = e.detail;
+            if (date && query) {
+                console.log(`요약 업데이트: date=${date}, query=${query}`);
+                this.updateSummary(query, date);
+            } else {
+                console.warn('필요한 데이터가 없습니다:', { date, query });
+            }
+        });
+        this.summaryCache = new Map();
+
+        document.addEventListener('chartDateClick', this.handleChartDateClick.bind(this));
     }
 
-    async updateSummary(date) {
+    handleChartDateClick(e) {
+        const { date, query } = e.detail;
+        if (date && query) {
+            const cacheKey = `${query}-${date}`;
+            
+            // 캐시된 데이터가 있는지 확인
+            if (this.summaryCache.has(cacheKey)) {
+                this.displaySummary(this.summaryCache.get(cacheKey));
+                return;
+            }
+            
+            this.updateSummary(query, date);
+        }
+    }
+    
+
+    async updateSummary(query, date) {
         try {
             this.showLoading();
-            const response = await fetch(`/api/summary/${date}/`);
+            const response = await fetch(`/api/v2/news/summary/?query=${encodeURIComponent(query)}&date=${encodeURIComponent(date)}`);
             const data = await response.json();
-
-            if (data.success) {
-                this.displaySummary(data.data);
-            } else {
-                this.showError(data.error);
-            }
+            
+            // 캐시에 저장
+            const cacheKey = `${query}-${date}`;
+            this.summaryCache.set(cacheKey, data);
+            
+            this.displaySummary(data);
         } catch (error) {
             this.showError('요약을 불러오는 중 오류가 발생했습니다.');
             console.error('Summary error:', error);
@@ -47,7 +86,19 @@ class SummaryHandler {
         }
     }
 
+
     displaySummary(summaryData) {
+        console.log('Displaying summary data:', summaryData);
+        
+        if (!summaryData) {
+            console.error('No summary data received');
+            return;
+        }
+    
+        if (!this.summaryContainers.background) {
+            console.error('Background container not found');
+            return;
+        }
         // 배경 정보 표시
         this.summaryContainers.background.innerHTML = `
             <div class="space-y-4">
@@ -60,36 +111,54 @@ class SummaryHandler {
                 </div>
             </div>
         `;
+        console.log('Background summary rendered');
 
-        // 주요 내용 표시
+        // 핵심 내용 표시
         this.summaryContainers.mainContent.innerHTML = `
             <div class="space-y-4">
                 <div class="flex items-center space-x-2">
                     ${this.summaryIcons.mainContent}
-                    <h3 class="text-lg font-medium text-gray-900">주요내용</h3>
+                    <h3 class="text-lg font-medium text-gray-900">핵심 내용</h3>
                 </div>
                 <div class="text-gray-600 leading-relaxed">
-                    ${this.formatSummaryText(summaryData.main_content)}
+                    ${this.formatSummaryText(summaryData.core_content)}
                 </div>
             </div>
         `;
 
-        // 현재 상황 표시
+        // 결론 표시
         this.summaryContainers.currentStatus.innerHTML = `
             <div class="space-y-4">
                 <div class="flex items-center space-x-2">
                     ${this.summaryIcons.currentStatus}
-                    <h3 class="text-lg font-medium text-gray-900">현황</h3>
+                    <h3 class="text-lg font-medium text-gray-900">결론</h3>
                 </div>
                 <div class="text-gray-600 leading-relaxed">
-                    ${this.formatSummaryText(summaryData.current_status)}
+                    ${this.formatSummaryText(summaryData.conclusion)}
                 </div>
             </div>
         `;
     }
 
+    // views.py -> 검색어 및 데이터 불러오기
+    async updateSummary(query, date) {
+        try {
+            this.showLoading();
+            const response = await fetch(`/api/v2/news/summary/?query=${encodeURIComponent(query)}&date=${date}`);
+            const data = await response.json();
+    
+            // API 응답이 바로 summary 데이터이므로 .data 참조 제거
+            this.displaySummary(data);
+        } catch (error) {
+            this.showError('요약을 불러오는 중 오류가 발생했습니다.');
+            console.error('Summary error:', error);
+        } finally {
+            this.hideLoading();
+        }
+    }
+
+
     formatSummaryText(text) {
-        // 줄바꿈을 HTML로 변환
         return text.replace(/\n/g, '<br>');
     }
 
@@ -103,10 +172,6 @@ class SummaryHandler {
         });
     }
 
-    hideLoading() {
-        // 로딩 인디케이터는 displaySummary에서 자동으로 제거됨
-    }
-
     showError(message) {
         Object.values(this.summaryContainers).forEach(container => {
             container.innerHTML = `
@@ -118,7 +183,9 @@ class SummaryHandler {
     }
 }
 
-// 초기화
+// DOM이 로드된 후 초기화
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('SummaryHandler 초기화 시작');
     window.summaryHandler = new SummaryHandler();
+    console.log('SummaryHandler 초기화 완료');
 });
