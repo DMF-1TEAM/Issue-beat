@@ -9,11 +9,6 @@ urlpatterns = [
     # 웹 페이지 URL
     path('', views.home, name='home'),
     path('search/', views.search_view, name='search'),
-<<<<<<< HEAD
-
-=======
-  
->>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0
     # v2 뉴스 검색 관련 API
     path('api/v2/news/chart/', views.news_count_chart_api, name='news_count_chart_api'),
     path('api/v2/news/summary/', views.get_summary_api, name='get_summary_api'),
@@ -24,8 +19,4 @@ urlpatterns = [
     path('api/suggestions/', views.get_search_suggestions_api, name='search_suggestions'),
     path('api/news/hover-summary/<str:date>/', views.get_hover_summary, name='hover_summary'),
 
-<<<<<<< HEAD
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-=======
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
->>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0
