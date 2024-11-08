@@ -18,6 +18,58 @@ def home(request):
     """홈 페이지"""
     trending_keywords = []  # 필요한 데이터를 여기에 추가하세요.
     return render(request, 'web/home.html', {'trending_keywords': trending_keywords})
+<<<<<<< HEAD
+
+def search_view(request):
+    query = request.GET.get('query', '').strip()
+    if not query:
+        return render(request, 'web/search.html')  # 검색 페이지 템플릿 렌더링
+
+    search_history, created = SearchHistory.objects.get_or_create(
+        keyword=query,
+        defaults={'count': 1}
+    )
+    if not created:
+        search_history.count += 1
+        search_history.save()
+
+    return render(request, 'web/search.html', {'query': query})
+
+@api_view(['GET'])
+def get_hover_summary(request, date):
+    """마우스 오버시 보여줄 요약 정보를 반환하는 API"""
+    try:
+
+        print(f"Fetching hover summary for date: {date}")  # 디버깅용 로그
+        
+        # 날짜 문자열을 datetime 객체로 변환
+        date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+        
+        # DailyIssueService 인스턴스 생성 및 요약 데이터 가져오기
+        analyzer = DailyIssueService()
+        summary_data = analyzer.get_daily_summary_data(date_obj)
+        
+        print(f"Generated summary data: {summary_data}")  # 디버깅용 로그
+        
+        return Response(summary_data)
+        
+    except ValueError as e:
+        print(f"Date parsing error: {e}")  # 디버깅용 로그
+        return Response(
+            {'error': '잘못된 날짜 형식입니다. (YYYY-MM-DD)'}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        print(f"Error in get_hover_summary: {e}")  # 디버깅용 로그
+        return Response(
+            {
+                'error': '데이터를 불러오는 중 오류가 발생했습니다.',
+                'detail': str(e) if settings.DEBUG else None
+            }, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+=======
 
 def search_view(request):
     query = request.GET.get('query', '').strip()
@@ -65,6 +117,7 @@ def search_view(request):
 #                {'error': '검색 중 오류가 발생했습니다.', 'detail': str(e)}, 
 #                status=status.HTTP_500_INTERNAL_SERVER_ERROR
 
+>>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0
 
 # 세개의 영역에 보내줘야하는 데이터
 
@@ -196,7 +249,10 @@ def agg_by_date(news_list, group_by, min_date, max_date):
 
     return date_labels, data_counts
 
+<<<<<<< HEAD
+=======
   
+>>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0
 # 2. 뉴스 요약 생성 (/api/v2/news/summary/?query=keyword&date=2024-11-01)
 @api_view(['GET'])
 def get_summary_api(request):
@@ -343,6 +399,18 @@ def get_news_api(request):
         'has_next': current_page.has_next(),
         'has_previous': current_page.has_previous()
     })
+<<<<<<< HEAD
+
+def home(request):
+    """홈 페이지"""
+    try:
+        trending_response = get_trending_keywords_api(request)
+        trending_keywords = trending_response.data.get('keywords', [])
+    except Exception:
+        trending_keywords = []
+    return render(request, 'web/home.html', {'trending_keywords': trending_keywords})
+=======
+>>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0
 
 # 트렌딩 키워드 API
 @api_view(['GET'])
@@ -425,4 +493,8 @@ def get_hover_summary(request, date):
                'detail': str(e) if settings.DEBUG else None
            }, 
            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+<<<<<<< HEAD
        )
+=======
+       )
+>>>>>>> 66c0c8ed5aa9d30f81d4441d6038470c9e2774c0

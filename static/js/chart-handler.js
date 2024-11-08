@@ -7,6 +7,7 @@ class IssuePulseChart {
         this.initChart();
         this.fetchDataAndUpdateChart();
         this.setupClickEvent();
+        this.setupFilterEvent()
         // 이벤트 발생 시 데이터 전달을 위한 상태 추가
         this.currentState = {
             date: null,
@@ -29,7 +30,7 @@ class IssuePulseChart {
                     borderWidth: 2,
                     tension: 0.4,
                     fill: true,
-                    pointRadius: 2,
+                    pointRadius: 4,
                     pointHoverRadius: 6
                 }]
             },
@@ -50,14 +51,14 @@ class IssuePulseChart {
             return;
         }
 
-        fetch(`/api/v2/news/chart/?query=${encodeURIComponent(this.searchQuery)}`)
+        fetch(`/api/v2/news/chart/?query=${encodeURIComponent(searchQuery)}&group_by=${this.groupBy}`)
             .then(response => response.json())
             .then(data => {
                 console.log('차트 데이터:', data);
                 if (Array.isArray(data)) {
                     const dates = data.map(item => item.date);
                     const counts = data.map(item => item.count);
-                  
+                    
                     // 차트 업데이트
                     this.chart.data.labels = dates;
                     this.chart.data.datasets[0].data = counts;
@@ -107,5 +108,21 @@ class IssuePulseChart {
             }, 300);
         }
     };
-}
+    }
+    
+    setupFilterEvent() {
+        // 필터 html 요소 가져오기
+        const filterSelect = document.getElementById('date_filter');
+        console.log("add event")
+
+        // #date_filter가 존재하는지 확인
+        if (filterSelect) {
+            filterSelect.addEventListener("change", (event) => {
+                this.groupBy = event.target.value;  // 선택된 필터값을 groupBy에 저장
+                this.fetchDataAndUpdateChart();     // 필터에 맞춰 차트 데이터를 업데이트
+            });
+        } else {
+            console.error("#date_filter 요소를 찾을 수 없습니다.");
+        }
+    }
 }
