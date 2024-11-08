@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.db.models import Q, Count
 from django.core.paginator import Paginator
-from .models import News, SearchHistory
+from .models import News, SearchHistory, NewsSummary
 from datetime import datetime, timedelta
 from .services.llm_service import LLMService
 from .services.daily_issue_service import DailyIssueService
@@ -113,37 +113,59 @@ def get_summary_api(request):
     query = request.GET.get('query', '').strip()
     date = request.GET.get('date', '').strip()
 
-    # 뉴스 검색
-    # 1. 날짜가 주어진 경우 해당 날짜의 키워드 뉴스를 가져옴
-    if date:
-        news_list = News.objects.filter(
-            Q(title__icontains=query) | Q(content__icontains=query),
-            date=date
-        )
-    # 2. 날짜가 주어지지 않은 경우 모든 뉴스를 가져옴
-    else:
-        news_list = News.objects.filter(
-            Q(title__icontains=query) | Q(content__icontains=query)
-        )
+    try:
+        # 저장된 요약이 있는지 확인
+        date_obj = datetime.strptime(date, '%Y-%m-%d').date() if date else None
+        saved_summary = NewsSummary.objects.filter(
+            keyword=query,
+            date=date_obj
+        ).first()
 
-    summary_data = [
-        {
+        if saved_summary:
+            return Response({
+                'background': saved_summary.background,
+                'core_content': saved_summary.core_content,
+                'conclusion': saved_summary.conclusion,
+                'cached': True
+            })
+        
+        # 뉴스 검색
+        news_filter = Q(title__icontains=query) | Q(content__icontains=query)
+        if date:
+            news_filter &= Q(date=date_obj)
+        
+        news_list = News.objects.filter(news_filter)
+        
+        summary_data = [{
             'title': news.title,
             'content': news.content
-        }
-        for news in news_list
-    ]
+        } for news in news_list]
 
-    # LLM 요약 생성
-    llm_service = LLMService()
+        # LLM 요약 생성
+        llm_service = LLMService()
 
-    summary = llm_service.generate_structured_summary(
-        summary_data,
-        search_keyword=query,
-        is_overall=True
-    )
+        summary = llm_service.generate_structured_summary(
+            summary_data,
+            search_keyword=query,
+            is_overall=not bool(date)
+        )
 
-    return Response(summary)
+        # 요약 저장
+        NewsSummary.objects.create(
+            keyword=query,
+            date=date_obj,
+            background=summary['background'],
+            core_content=summary['core_content'],
+            conclusion=summary['conclusion']
+        )
+
+        return Response(summary)
+    
+    except Exception as e:
+        return Response(
+            {'error': '요약을 생성하는 중 오류가 발생했습니다.', 'detail': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 # 3. 뉴스 목록(페이지네이션) (/api/v2/news/?query=keyword&date=2024-11-01&page=1&page_size=10)

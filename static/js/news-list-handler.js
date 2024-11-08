@@ -21,8 +21,23 @@ class NewsListHandler {
             }
         }, { rootMargin: '100px' });  // 여유를 주어 미리 로드
 
-        // chartDateClick 이벤트 리스너 등록
-        document.addEventListener('chartDateClick', (e) => this.handleDateClick(e.detail.date));
+            // chartDateClick 이벤트 리스너
+        document.addEventListener('chartDateClick', (e) => {
+            const { date } = e.detail;
+            if (date !== this.currentDate) {
+                this.handleDateClick(date);
+            }
+        });
+    }
+
+    async handleDateClick(date) {
+        if (this.currentDate === date) {
+            return; // 같은 날짜 중복 클릭 방지
+        }
+        
+        this.currentDate = date;
+        this.resetList();
+        await this.fetchNews();
     }
 
     async handleSearch(query) {
