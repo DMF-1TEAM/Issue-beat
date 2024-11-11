@@ -38,7 +38,35 @@
             <!-- 뉴스 목록은 자바스크립트로 동적 추가 -->
         </div>
     </section>
-</main> 
+
+<!-- 뉴스 팝업 스타일 -->
+<style>
+    .popup {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.75);
+        z-index: 50;
+        overflow-y: auto; /* 세로로 넘칠 때 스크롤 허용 */
+    }
+
+    .popup-content {
+        background-color: white;
+        border-radius: 8px;
+        padding: 24px;
+        max-width: 90vw; /* 가로 최대 너비를 화면의 90%로 설정 */
+        width: 60%; /* 원하는 고정 가로 크기 (기본값) */
+        max-height: 70vw; /* 세로 최대 높이 제한 */
+        overflow-y: auto; /* 컨텐츠가 넘칠 때 세로 스크롤 */
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    }
+</style>
+
 
 <!-- 호버 팝업을 위한 스타일 -->
 <style>

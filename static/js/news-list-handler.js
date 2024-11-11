@@ -126,7 +126,7 @@ class NewsListHandler {
         newsList.forEach((news, index) => {
             const newsItem = document.createElement('div');
             newsItem.classList.add('bg-white', 'rounded-lg', 'shadow-sm', 'hover:shadow-md', 'transition-shadow', 'duration-200', 'p-4', 'mb-4');
-
+    
             newsItem.innerHTML = `
                 <div class="flex justify-between items-start">
                     <h3 class="text-lg font-medium text-gray-900 mb-2 flex-grow">${news.title}</h3>
@@ -148,13 +148,59 @@ class NewsListHandler {
                     </a>
                 </div>
             `;
-
+    
+            // 뉴스 항목 클릭 시 API 요청
+            newsItem.addEventListener('click', async () => {
+                try {
+                    const response = await fetch(`/api/news/${news.id}`);
+                    const data = await response.json();
+    
+                    if (!response.ok) {
+                        throw new Error(data.error || '뉴스 데이터를 불러오는 데 실패했습니다.');
+                    }
+    
+                    // 팝업 창을 생성하여 뉴스 데이터를 표시
+                    this.showPopup(data);
+                } catch (error) {
+                    console.error('뉴스 데이터를 불러오는 중 오류 발생:', error);
+                }
+            });
+    
             this.newsListContainer.appendChild(newsItem);
-
-            // 마지막 뉴스 아이템에 대해 Intersection Observer 추가
+    
+            // 무한 스크롤을 위해 마지막 뉴스 항목 관찰
             if (index === newsList.length - 1) {
                 this.observer.observe(newsItem);
             }
         });
     }
-}
+    
+    // 팝업 창 생성 함수
+    showPopup(data) {
+        const popup = document.createElement('div');
+        popup.classList.add('popup', 'fixed', 'inset-0', 'bg-gray-800', 'bg-opacity-75', 'flex', 'justify-center', 'items-center', 'z-50');
+        
+        popup.innerHTML = `
+            <div class="popup-content">
+                <h2 class="text-2xl font-bold mb-2">${data.title}</h2>
+                <div class="text-sm text-gray-500 mb-4">
+                    <span>${data.press}</span> | <span>${data.author}</span>
+                </div>
+                ${data.image ? `<img src="${data.image}" alt="뉴스 이미지" class="mb-4 rounded">` : ''}
+                <p class="text-gray-700 mb-4">${data.content}</p>
+                <a href="${data.link}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                    원문 보기
+                </a>
+                <button class="mt-4 bg-red-500 text-white py-2 px-4 rounded close-popup">
+                    닫기
+                </button>
+            </div>
+        `;
+        
+        popup.querySelector('.close-popup').addEventListener('click', () => {
+            popup.remove();
+        });
+        
+        document.body.appendChild(popup);
+    }  
+}    
