@@ -83,31 +83,15 @@ def get_hover_summary(request, date):
 # 1. 날짜별 뉴스건수 (/api/v2/news/chart/?query=keyword&groupby=day)
 @api_view(['GET'])
 def news_count_chart_api(request):
-    """
-    - request
-    /api/v2/news/?query=검색어
-    - response
-    [
-        {
-            "date": "2024-11-01",
-            "count": 9
-        },
-        {
-            "date": "2024-11-02",
-            "count": 6
-        },
-        {
-            "date": "2024-11-03",
-            "count": 5
-        },
-        {
-            "date": "2024-11-04",
-            "count": 2
-        }
-    ]
-    """
+
     query = request.GET.get('query', '').strip()
+    start_date_str = request.GET.get('start_date', None)
+    end_date_str = request.GET.get('end_date', None)
     group_by = request.GET.get('group_by', '1day').strip()
+
+    # 날짜 범위 파라미터 -> datetime 객체로 변환 
+    start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else None
+    end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date() if end_date_str else None
 
     # 뉴스 검색: query를 사용해 제목과 내용에서 검색어 포함된 뉴스만 필터링
     news_list = News.objects.filter(
@@ -115,13 +99,19 @@ def news_count_chart_api(request):
     ).order_by('-date')
     # print('news_list:\n',news_list[:10])
 
-    # 시작 끝 날짜 
+    # 지정된 날짜 범위로 필터링
+    if start_date:
+        news_list = news_list.filter(date__gte=start_date)
+    if end_date:
+        news_list = news_list.filter(date__lte=end_date)
+
+
+    # 시작 & 끝 날짜 
     min_date = news_list.earliest('date').date
     max_date = news_list.latest('date').date
 
     # agg_by_date 함수로 날짜별 집계 결과를 받음
     date_labels, data_counts = agg_by_date(news_list, group_by, min_date, max_date)
-
     # 날짜별 카운트 결과 반환
     chart_data = [
         {"date": date, "count": count}
@@ -130,6 +120,7 @@ def news_count_chart_api(request):
 
     return Response(chart_data)
 
+# 1+ 날짜 집계 함수
 def agg_by_date(news_list, group_by, min_date, max_date):
     date_labels = []
     data_counts = []
@@ -154,11 +145,6 @@ def agg_by_date(news_list, group_by, min_date, max_date):
     elif group_by == '1week':
 
         date_range = []
-        current_date = min_date
-
-        while current_date <= max_date:
-            date_range.append(current_date)
-            current_date += timedelta(weeks=1)
 
         news_data = (news_list
                      .filter(date__range=[min_date, max_date])
@@ -166,6 +152,19 @@ def agg_by_date(news_list, group_by, min_date, max_date):
                      .values('week')
                      .annotate(count=Count('id'))
                      .order_by('week'))
+        print("======================news_data===========================")
+        print(news_data)
+        print("==========================================================")
+
+        current_date = news_data[0]['week']
+    
+        while current_date <= max_date:
+            date_range.append(current_date)
+            current_date += timedelta(weeks=1)
+
+        print("======================date_range===========================")
+        print(date_range)
+        print("==========================================================")
 
         news_data_dict = {entry['week'].strftime('%Y-%m-%d'): entry['count'] for entry in news_data}
 
@@ -345,15 +344,6 @@ def get_news_api(request):
         'has_next': current_page.has_next(),
         'has_previous': current_page.has_previous()
     })
-
-def home(request):
-    """홈 페이지"""
-    try:
-        trending_response = get_trending_keywords_api(request)
-        trending_keywords = trending_response.data.get('keywords', [])
-    except Exception:
-        trending_keywords = []
-    return render(request, 'web/home.html', {'trending_keywords': trending_keywords})
 
 # 트렌딩 키워드 API
 @api_view(['GET'])

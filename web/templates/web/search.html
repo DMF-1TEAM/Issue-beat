@@ -7,12 +7,14 @@
     <section class="mb-8">
         <div class="bg-white rounded-lg shadow-sm p-6">
             <!-- 날짜 필터 -->
-            <label for="filter">필터 1</label>
-                <select name="languages" id="date_filter">
-                    <option value="1day" {% if group_by == "1day" %}selected{% endif %}>일(day)</option>
-                    <option value="1week" {% if group_by == "1week" %}selected{% endif %}>주(week)</option>
-                    <option value="1month" {% if group_by == "1month" %}selected{% endif %}>월(month)</option>
-                </select>
+            <input type="date" id="startDate" />
+            <input type="date" id="endDate" />
+            <label for="filter"></label>
+            <select name="languages" id="date_filter">
+                <option value="1day" {% if group_by == "1day" %}selected{% endif %}>일(day)</option>
+                <option value="1week" {% if group_by == "1week" %}selected{% endif %}>주(week)</option>
+                <option value="1month" {% if group_by == "1month" %}selected{% endif %}>월(month)</option>
+            </select>
             <div class="aspect-w-16 aspect-h-9">
                 <canvas id="timeline-chart"></canvas>
             </div>
@@ -100,6 +102,7 @@
         // 새로운 차트 초기화
         // chart-handler.js에 정의한 IssuePulseChart
         const issuePulseChart = new IssuePulseChart();
+        // console.log(issuePulseChart)
     });
 </script>
 {% endblock %}`
