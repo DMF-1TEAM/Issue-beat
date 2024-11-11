@@ -5,6 +5,8 @@ class IssuePulseChart {
         this.endDate = document.getElementById("endDate").value;            // 날짜 범위 생성
         this.groupBy="1day";                                                // 날짜 기준 집계
         this.selectedDate = null;                                           // 특정 일자 클릭
+        this.groupBy = '1day';
+        this.selectedDate = null;
         this.searchQuery = new URLSearchParams(window.location.search).get('query') || '';        
         
         this.initChart();
