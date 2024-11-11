@@ -3,7 +3,7 @@ class NewsListHandler {
         this.newsListContainer = document.getElementById('news-list');
         this.newsCountElement = document.getElementById('news-count');
         this.searchQuery = '';
-        this.currentDate = null;
+        this.currentDate = this.getDateFromURL(); // Extract date from URL
         this.currentPage = 1;
         this.pageSize = 10;
         this.loading = false;
@@ -19,15 +19,21 @@ class NewsListHandler {
             if (entry.isIntersecting && this.hasNextPage && !this.loading) {
                 this.fetchNews();
             }
-        }, { rootMargin: '100px' });  // 여유를 주어 미리 로드
+        }, { rootMargin: '100px' });
 
-            // chartDateClick 이벤트 리스너
+        // chartDateClick 이벤트 리스너
         document.addEventListener('chartDateClick', (e) => {
             const { date } = e.detail;
             if (date !== this.currentDate) {
                 this.handleDateClick(date);
             }
         });
+    }
+
+    // URL에서 날짜 추출
+    getDateFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('date') || null;  // URL에서 date 파라미터 추출
     }
 
     async handleDateClick(date) {
@@ -41,12 +47,11 @@ class NewsListHandler {
     }
 
     async handleSearch(query) {
-        this.currentDate = date;  // 선택된 날짜로 업데이트
-        this.searchQuery = query;
+        this.searchQuery = query; // 검색어 업데이트
         this.resetList();
 
         try {
-            const response = await fetch(`/api/v2/news/?query=${encodeURIComponent(query)}`);
+            const response = await fetch(`/api/v2/news/?query=${encodeURIComponent(query)}&date=${this.currentDate}`);
             const data = await response.json();
 
             if (!response.ok) {
@@ -57,20 +62,6 @@ class NewsListHandler {
         } catch (error) {
             console.error('Error searching news:', error);
             this.showError('검색 결과를 불러오는데 실패했습니다.');
-        }
-    }
-
-    handleDateClick(date) {
-        // 클릭된 날짜가 있을 때만 날짜를 업데이트하고 데이터 로드
-        if (date) {
-            this.currentDate = date;
-            this.resetList();
-            this.fetchNews();
-        } else {
-            // 날짜가 없을 때는 초기화 후 전체 데이터를 로드
-            this.currentDate = null;
-            this.resetList();
-            this.fetchNews();
         }
     }
 
@@ -98,7 +89,7 @@ class NewsListHandler {
         }
 
         try {
-            // `currentDate`가 없으면 date 파라미터를 제외
+            // `currentDate`가 있으면 해당 날짜로 필터링
             const url = this.currentDate
                 ? `/api/v2/news/?query=${encodeURIComponent(this.searchQuery)}&date=${this.currentDate}&page=${this.currentPage}&page_size=${this.pageSize}`
                 : `/api/v2/news/?query=${encodeURIComponent(this.searchQuery)}&page=${this.currentPage}&page_size=${this.pageSize}`;
@@ -203,4 +194,4 @@ class NewsListHandler {
         
         document.body.appendChild(popup);
     }  
-}    
+}
