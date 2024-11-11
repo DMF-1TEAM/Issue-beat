@@ -103,7 +103,8 @@ def news_count_chart_api(request):
     if start_date:
         news_list = news_list.filter(date__gte=start_date)
     if end_date:
-        newS_list = news_list.filter(date__lte=end_date)
+        news_list = news_list.filter(date__lte=end_date)
+
 
     # 시작 & 끝 날짜 
     min_date = news_list.earliest('date').date
@@ -111,7 +112,6 @@ def news_count_chart_api(request):
 
     # agg_by_date 함수로 날짜별 집계 결과를 받음
     date_labels, data_counts = agg_by_date(news_list, group_by, min_date, max_date)
-
     # 날짜별 카운트 결과 반환
     chart_data = [
         {"date": date, "count": count}
@@ -145,11 +145,6 @@ def agg_by_date(news_list, group_by, min_date, max_date):
     elif group_by == '1week':
 
         date_range = []
-        current_date = min_date
-
-        while current_date <= max_date:
-            date_range.append(current_date)
-            current_date += timedelta(weeks=1)
 
         news_data = (news_list
                      .filter(date__range=[min_date, max_date])
@@ -157,6 +152,19 @@ def agg_by_date(news_list, group_by, min_date, max_date):
                      .values('week')
                      .annotate(count=Count('id'))
                      .order_by('week'))
+        print("======================news_data===========================")
+        print(news_data)
+        print("==========================================================")
+
+        current_date = news_data[0]['week']
+    
+        while current_date <= max_date:
+            date_range.append(current_date)
+            current_date += timedelta(weeks=1)
+
+        print("======================date_range===========================")
+        print(date_range)
+        print("==========================================================")
 
         news_data_dict = {entry['week'].strftime('%Y-%m-%d'): entry['count'] for entry in news_data}
 

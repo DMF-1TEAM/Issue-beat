@@ -14,14 +14,14 @@ class IssuePulseChart {
         this.setupDateRangeEvent();
 
         // Date picker 초기화
-        flatpickr("#startDate", { 
-            dateFormat: "Y-m-d", 
-            onChange: this.handleDateChange.bind(this) // 날짜가 변경될 때 이벤트 핸들러 실행
-        });
-        flatpickr("#endDate", { 
-            dateFormat: "Y-m-d", 
-            onChange: this.handleDateChange.bind(this) // 날짜가 변경될 때 이벤트 핸들러 실행
-        });
+        // flatpickr("#startDate", { 
+        //     dateFormat: "Y-m-d", 
+        //     onChange: this.handleDateChange.bind(this) // 날짜가 변경될 때 이벤트 핸들러 실행
+        // });
+        // flatpickr("#endDate", { 
+        //     dateFormat: "Y-m-d", 
+        //     onChange: this.handleDateChange.bind(this) // 날짜가 변경될 때 이벤트 핸들러 실행
+        // });
 
         // 이벤트 발생 시 데이터 전달을 위한 상태 추가
         this.currentState = {
@@ -69,8 +69,12 @@ class IssuePulseChart {
         const startDate = this.startDate || '';
         const endDate = this.endDate || '';
 
+        // URL 로그 출력
+        const url = `/api/v2/news/chart/?query=${encodeURIComponent(this.searchQuery)}&group_by=${this.groupBy}&start_date=${startDate}&end_date=${endDate}`;
+        console.log("API 호출 URL:", url);
+
         // 날짜 범위 관련 파라미터 추가
-        fetch(`/api/v2/news/chart/?query=${encodeURIComponent(searchQuery)}&group_by=${this.groupBy}&start_date${startDate}&end_date=${endDate}`)
+        fetch(`/api/v2/news/chart/?query=${encodeURIComponent(this.searchQuery)}&group_by=${this.groupBy}&start_date=${startDate}&end_date=${endDate}`)
             .then(response => response.json())
             .then(data => {
                 console.log('차트 데이터:', data);
@@ -99,27 +103,14 @@ class IssuePulseChart {
                 this.fetchDataAndUpdateChart();
             });
 
-            endDateInput.adEventListener("change", (event) => {
+            endDateInput.addEventListener("change", (event) => {
                 this.endDate = event.target.value;
-                this.fetchDataAndUpdateChart()
+                this.fetchDataAndUpdateChart();
             });
         } else {
             console.error("날짜 범위 필터 요소를 찾을 수 없습니다.")
         }
         
-    }
-
-    handleDateChange(selectedDates, dateStr, instance) {
-        if (instance.element.id === "startDate") {
-            this.startDate = dateStr;
-        } else if (instance.element.id === "endDate") {
-            this.endDate = dateStr;
-        }
-
-        // 두 날짜가 모두 선택된 경우에만 차트를 업데이트
-        if (this.startDate && this.endDate) {
-            this.fetchDataAndUpdateChart();
-        }
     }
 
     setupClickEvent() {
