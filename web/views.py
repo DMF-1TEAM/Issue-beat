@@ -16,7 +16,11 @@ from .services.daily_issue_service import DailyIssueService
 
 def home(request):
     """홈 페이지"""
-    trending_keywords = []  # 필요한 데이터를 여기에 추가하세요.
+    try:
+        trending_response = get_trending_keywords_api(request)
+        trending_keywords = trending_response.data.get('keywords', [])
+    except Exception:
+        trending_keywords = []
     return render(request, 'web/home.html', {'trending_keywords': trending_keywords})
 
 def search_view(request):
@@ -34,53 +38,6 @@ def search_view(request):
 
     return render(request, 'web/search.html', {'query': query})
 
-@api_view(['GET'])
-def get_hover_summary(request, date):
-    """마우스 오버시 보여줄 요약 정보를 반환하는 API"""
-    try:
-
-        print(f"Fetching hover summary for date: {date}")  # 디버깅용 로그
-        
-        # 날짜 문자열을 datetime 객체로 변환
-        date_obj = datetime.strptime(date, '%Y-%m-%d').date()
-        
-        # DailyIssueService 인스턴스 생성 및 요약 데이터 가져오기
-        analyzer = DailyIssueService()
-        summary_data = analyzer.get_daily_summary_data(date_obj)
-        
-        print(f"Generated summary data: {summary_data}")  # 디버깅용 로그
-        
-        return Response(summary_data)
-        
-    except ValueError as e:
-        print(f"Date parsing error: {e}")  # 디버깅용 로그
-        return Response(
-            {'error': '잘못된 날짜 형식입니다. (YYYY-MM-DD)'}, 
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    except Exception as e:
-        print(f"Error in get_hover_summary: {e}")  # 디버깅용 로그
-        return Response(
-            {
-                'error': '데이터를 불러오는 중 오류가 발생했습니다.',
-                'detail': str(e) if settings.DEBUG else None
-            }, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-    
-
-# 세개의 영역에 보내줘야하는 데이터
-
-# 1. 뉴스데이터 날짜별 개수 라인차트 보여주기위한 데이터
-# 2. 뉴스 요약 생성
-#     2-1. 전체 기간 요약
-#     2-2. 차트 클릭시 해당 날짜 요약
-# 3. 뉴스 목록(페이지네이션)
-#     3-1. 전체 기간 뉴스 목록
-#     3-2. 차트 클릭시 해당 날짜 뉴스 목록
-
-
-# 1. 날짜별 뉴스건수 (/api/v2/news/chart/?query=keyword&groupby=day)
 @api_view(['GET'])
 def news_count_chart_api(request):
     """
@@ -114,6 +71,14 @@ def news_count_chart_api(request):
         Q(title__icontains=query) | Q(content__icontains=query)
     ).order_by('-date')
     # print('news_list:\n',news_list[:10])
+
+    # 뉴스가 없는 경우 빈 배열 반환
+    if not news_list.exists():
+        return Response([])
+
+    # 차트 데이터 생성 전에 요약 캐시 준비
+    summary_cache = DailyIssueService()
+    summary_cache.prepare_daily_summaries(query, news_list)
 
     # 시작 끝 날짜 
     min_date = news_list.earliest('date').date
@@ -199,26 +164,35 @@ def agg_by_date(news_list, group_by, min_date, max_date):
 
     return date_labels, data_counts
 
-# 2. 뉴스 요약 생성 (/api/v2/news/summary/?query=keyword&date=2024-11-01)
+@api_view(['GET'])
+def get_hover_summary(request, date):
+    """특정 날짜의 요약 정보를 반환하는 API"""
+    try:
+        date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+        query = request.GET.get('query', '').strip()
+        
+        issue_service = DailyIssueService()
+        summary_data = issue_service.get_cached_summary(date_obj, query)
+        
+        return Response(summary_data)
+
+    except ValueError:
+        return Response(
+            {'error': '잘못된 날짜 형식입니다.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
 @api_view(['GET'])
 def get_summary_api(request):
-    """
-    - request
-    /api/v2/news/summary/?query=keyword&date=2024-11-01
-
-    - response
-    {
-        "background": "요약 정보",
-        "core_content": "요약 정보",
-        "conclusion": "요약 정보"
-    }
-    """
+    """전체 또는 특정 날짜의 뉴스 요약 API"""
     query = request.GET.get('query', '').strip()
     date = request.GET.get('date', '').strip()
-
+    
     try:
-        # 저장된 요약이 있는지 확인
         date_obj = datetime.strptime(date, '%Y-%m-%d').date() if date else None
+
+        # 캐시된 요약 확인
         saved_summary = NewsSummary.objects.filter(
             keyword=query,
             date=date_obj
@@ -231,24 +205,18 @@ def get_summary_api(request):
                 'conclusion': saved_summary.conclusion,
                 'cached': True
             })
-        
-        # 뉴스 검색
+
+        # 뉴스 필터링
         news_filter = Q(title__icontains=query) | Q(content__icontains=query)
         if date:
             news_filter &= Q(date=date_obj)
         
-        news_list = News.objects.filter(news_filter)
-        
-        summary_data = [{
-            'title': news.title,
-            'content': news.content
-        } for news in news_list]
+        news_list = News.objects.filter(news_filter).order_by('-date')[:50]
 
-        # LLM 요약 생성
+        # 새로운 요약 생성
         llm_service = LLMService()
-
         summary = llm_service.generate_structured_summary(
-            summary_data,
+            [{'title': news.title, 'content': news.content} for news in news_list],
             search_keyword=query,
             is_overall=not bool(date)
         )
@@ -263,12 +231,20 @@ def get_summary_api(request):
         )
 
         return Response(summary)
-    
-    except Exception as e:
+
+    except ValueError:
         return Response(
-            {'error': '요약을 생성하는 중 오류가 발생했습니다.', 'detail': str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            {'error': '잘못된 날짜 형식입니다.'},
+            status=status.HTTP_400_BAD_REQUEST
         )
+    except Exception as e:
+        print(f"요약 API 오류: {e}")
+        return Response({
+            'background': '요약 생성 중 오류가 발생했습니다.',
+            'core_content': '잠시 후 다시 시도해주세요.',
+            'conclusion': '',
+            'is_error': True
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # 3. 뉴스 목록(페이지네이션) (/api/v2/news/?query=keyword&date=2024-11-01&page=1&page_size=10)
@@ -346,22 +322,14 @@ def get_news_api(request):
         'has_previous': current_page.has_previous()
     })
 
-def home(request):
-    """홈 페이지"""
-    try:
-        trending_response = get_trending_keywords_api(request)
-        trending_keywords = trending_response.data.get('keywords', [])
-    except Exception:
-        trending_keywords = []
-    return render(request, 'web/home.html', {'trending_keywords': trending_keywords})
+
 
 # 트렌딩 키워드 API
 @api_view(['GET'])
 def get_trending_keywords_api(request):
+    """트렌딩 키워드 API"""
     try:
-        # 가장 많이 검색된 키워드 상위 5개
-        trending = SearchHistory.objects.all()[:5]
-        # last_searched 필드로 변경
+        trending = SearchHistory.objects.order_by('-count')[:5]
         return JsonResponse({
             'keywords': [
                 {
@@ -373,7 +341,11 @@ def get_trending_keywords_api(request):
             ]
         })
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        print(f"트렌딩 키워드 API 오류: {e}")
+        return JsonResponse(
+            {'error': '트렌딩 키워드를 불러오는 중 오류가 발생했습니다.'},
+            status=500
+        )
 
 def update_search_history(keyword):
     """검색 기록을 업데이트하거나 생성하는 함수"""
@@ -394,7 +366,9 @@ def update_search_history(keyword):
 
 @api_view(['GET'])
 def get_search_suggestions_api(request):
+    """검색어 자동완성 API"""
     query = request.GET.get('query', '').strip()
+    
     if len(query) < 2:
         return JsonResponse({'suggestions': []})
 
@@ -406,34 +380,3 @@ def get_search_suggestions_api(request):
         return JsonResponse({'suggestions': list(suggestions)})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
-# 마우스 오버시 요약 정보 API
-@api_view(['GET'])
-def get_hover_summary(request, date):
-   try:
-       print(f"Fetching hover summary for date: {date}")  
-       
-       date_obj = datetime.strptime(date, '%Y-%m-%d').date()
-       
-       analyzer = DailyIssueService()
-       summary_data = analyzer.get_daily_summary_data(date_obj)
-       
-       print(f"Generated summary data: {summary_data}")
-       
-       return Response(summary_data)
-       
-   except ValueError as e:
-       print(f"Date parsing error: {e}")
-       return Response(
-           {'error': '잘못된 날짜 형식입니다. (YYYY-MM-DD)'}, 
-           status=status.HTTP_400_BAD_REQUEST
-       )
-   except Exception as e:
-       print(f"Error in get_hover_summary: {e}")
-       return Response(
-           {
-               'error': '데이터를 불러오는 중 오류가 발생했습니다.',
-               'detail': str(e) if settings.DEBUG else None
-           }, 
-           status=status.HTTP_500_INTERNAL_SERVER_ERROR
-       )

@@ -64,3 +64,21 @@ class NewsSummary(models.Model):
     
     def __str__(self):
         return f"{self.keyword} - {self.date or 'overall'}"
+    
+class DailySummary(models.Model):
+    date = models.DateField()
+    query = models.CharField(max_length=200, null=True, blank=True)
+    title_summary = models.CharField(max_length=100)
+    content_summary = models.TextField()
+    news_count = models.IntegerField()
+    representative_image = models.ImageField(upload_to='daily_summaries/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['query']),
+        ]
+
+    def __str__(self):
+        return f"{self.date} - {self.query if self.query else 'All'}"

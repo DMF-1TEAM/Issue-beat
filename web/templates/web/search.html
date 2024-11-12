@@ -7,14 +7,23 @@
     <section class="mb-8">
         <div class="bg-white rounded-lg shadow-sm p-6">
             <!-- 날짜 필터 -->
-            <label for="filter">필터 1</label>
-                <select name="languages" id="date_filter">
+            <div class="mb-4">
+                <label for="date_filter" class="text-sm font-medium text-gray-700">기간 선택</label>
+                <select name="languages" id="date_filter" class="ml-2 p-1 border rounded">
                     <option value="1day" {% if group_by == "1day" %}selected{% endif %}>일(day)</option>
                     <option value="1week" {% if group_by == "1week" %}selected{% endif %}>주(week)</option>
                     <option value="1month" {% if group_by == "1month" %}selected{% endif %}>월(month)</option>
                 </select>
-            <div class="aspect-w-16 aspect-h-9">
+            </div>
+            
+            <!-- 차트 컨테이너 -->
+            <div class="chart-container w-full" style="position: relative; height: 400px;">
                 <canvas id="timeline-chart"></canvas>
+            </div>
+    
+            <!-- 차트 아래에 요약 정보가 표시될 영역 -->
+            <div id="chart-summary" class="hidden mt-4 p-4 border-t border-gray-200">
+                <!-- 요약 정보는 JavaScript에서 동적으로 추가됨 -->
             </div>
         </div>
     </section>
@@ -47,17 +56,23 @@
     </section>
 </main> 
 
-<!-- 호버 팝업을 위한 스타일 -->
 <style>
-    #hover-summary {
+    .chartjs-tooltip {
+        z-index: 1000;
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         pointer-events: none;
-        animation: fadeIn 0.2s ease-out;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+    .chart-container {
+        position: relative;
+        width: 100%;
+        height: 400px;
+    }
+
+    #timeline-chart {
+        background: white;
     }
 </style>
 {% endblock %}
@@ -93,6 +108,7 @@
         if (searchQuery) {
             // 요약 핸들러 초기화 및 데이터 로드
             window.summaryHandler = new SummaryHandler();
+            window.summaryHandler.showLoading(); // 여기에 로딩 표시 추가
             const today = new Date().toISOString().split('T')[0];
             window.summaryHandler.updateSummary(searchQuery, today);
         }
