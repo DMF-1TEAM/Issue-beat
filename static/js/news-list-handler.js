@@ -2,8 +2,8 @@ class NewsListHandler {
     constructor() {
         this.newsListContainer = document.getElementById('news-list');
         this.newsCountElement = document.getElementById('news-count');
-        this.searchQuery = '';
-        this.currentDate = this.getDateFromURL(); // Extract date from URL
+        this.searchQuery = this.getQueryFromURL(); // URL에서 쿼리 파라미터로 검색어 설정
+        this.currentDate = this.getDateFromURL(); // URL에서 날짜 파라미터 추출
         this.currentPage = 1;
         this.pageSize = 10;
         this.loading = false;
@@ -30,39 +30,16 @@ class NewsListHandler {
         });
     }
 
-    // URL에서 날짜 추출
+    // URL에서 쿼리 파라미터(query) 추출
+    getQueryFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('query') || ''; // query 파라미터가 없으면 빈 문자열 반환
+    }
+
+    // URL에서 날짜 파라미터 추출
     getDateFromURL() {
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('date') || null;  // URL에서 date 파라미터 추출
-    }
-
-    async handleDateClick(date) {
-        if (this.currentDate === date) {
-            return; // 같은 날짜 중복 클릭 방지
-        }
-        
-        this.currentDate = date;
-        this.resetList();
-        await this.fetchNews();
-    }
-
-    async handleSearch(query) {
-        this.searchQuery = query; // 검색어 업데이트
-        this.resetList();
-
-        try {
-            const response = await fetch(`/api/v2/news/?query=${encodeURIComponent(query)}&date=${this.currentDate}`);
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || '검색 중 오류가 발생했습니다.');
-            }
-
-            await this.updateNewsList(data);
-        } catch (error) {
-            console.error('Error searching news:', error);
-            this.showError('검색 결과를 불러오는데 실패했습니다.');
-        }
+        return urlParams.get('date') || null;
     }
 
     resetList() {

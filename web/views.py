@@ -309,6 +309,8 @@ def get_news_api(request):
     date = request.GET.get('date', '').strip()
     page = int(request.GET.get('page', 1))
     page_size = int(request.GET.get('page_size', 10))
+    print('================================')
+    print(query, date, page)
 
     # 뉴스 검색
     # 1. 날짜가 주어진 경우 해당 날짜의 키워드 뉴스를 가져옴

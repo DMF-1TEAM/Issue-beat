@@ -41,12 +41,23 @@
     <section class="bg-white rounded-lg shadow-sm">
         <div class="news-header flex justify-between items-center p-6 border-b">
             <h2 class="text-xl font-medium text-gray-900">관련 뉴스</h2>
-            <div id="news-count" class="text-sm text-gray-500"></div>
+            <!-- 정렬 기준 드롭다운 -->
+            <div class="flex items-center space-x-4">
+                <div id="news-count" class="text-sm text-gray-500">총 0개 뉴스</div>
+                <!-- <div class="flex items-center">
+                    <label for="sort-order" class="text-sm text-gray-700">정렬 기준:</label>
+                    <select id="sort-order" class="ml-2 p-2 border rounded">
+                        <option value="latest">최신순</option>
+                        <option value="content-length">내용 길이순</option>
+                    </select>
+                </div> -->
+            </div>
         </div>
         <div id="news-list" class="news-list space-y-4 p-6" style="height: 500px; overflow-y: auto;">
             <!-- 뉴스 목록은 자바스크립트로 동적 추가 -->
         </div>
     </section>
+
 
 <!-- 뉴스 팝업 스타일 -->
 <style>
