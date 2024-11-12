@@ -29,14 +29,14 @@
             </div>
         </form>
 
-        <!-- 실시간 인기 검색어 -->
+       <!-- 실시간 인기 검색어 -->
         <div class="mt-8">
             <h2 class="text-lg font-medium text-gray-900 mb-4">실시간 인기 검색어</h2>
             <div id="trending-keywords" class="flex flex-wrap gap-2">
                 {% for keyword in trending_keywords %}
                 <a href="{% url 'web:search' %}?query={{ keyword.keyword|urlencode }}" 
-                   class="px-4 py-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow
-                          text-gray-700 text-sm focus:outline-none flex items-center space-x-2">
+                class="px-4 py-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow
+                        text-gray-700 text-sm focus:outline-none flex items-center space-x-2">
                     <span class="text-blue-600 font-medium">{{ forloop.counter }}</span>
                     <span>{{ keyword.keyword }}</span>
                 </a>

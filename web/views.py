@@ -16,7 +16,7 @@ from .services.daily_issue_service import DailyIssueService
 
 def home(request):
     """홈 페이지"""
-    trending_keywords = []  # 필요한 데이터를 여기에 추가하세요.
+    trending_keywords = SearchHistory.objects.all()[:5]
     return render(request, 'web/home.html', {'trending_keywords': trending_keywords})
 
 def search_view(request):
