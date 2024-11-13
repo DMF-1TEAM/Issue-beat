@@ -2,27 +2,26 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from django.conf import settings
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.db.models import Q, Count
-from django.db.models import Min, Max
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
-from django.core.paginator import Paginator
-from .models import News, SearchHistory, NewsSummary
 from datetime import datetime, timedelta
+from django.core.paginator import Paginator
+from .models import News, SearchHistory, NewsSummary, DailySummary
 from .services.llm_service import LLMService
 from .services.daily_issue_service import DailyIssueService
 
 def home(request):
     """홈 페이지"""
-    trending_keywords = SearchHistory.objects.all()[:5]
+    trending_keywords = []  # 필요한 데이터를 여기에 추가하세요.
     return render(request, 'web/home.html', {'trending_keywords': trending_keywords})
 
 def search_view(request):
+    """검색 페이지"""
     query = request.GET.get('query', '').strip()
     if not query:
-        return render(request, 'web/search.html')  # 검색 페이지 템플릿 렌더링
+        return render(request, 'web/search.html')
 
     search_history, created = SearchHistory.objects.get_or_create(
         keyword=query,
@@ -83,35 +82,45 @@ def get_hover_summary(request, date):
 # 1. 날짜별 뉴스건수 (/api/v2/news/chart/?query=keyword&groupby=day)
 @api_view(['GET'])
 def news_count_chart_api(request):
-
+    """
+    - request
+    /api/v2/news/?query=검색어
+    - response
+    [
+        {
+            "date": "2024-11-01",
+            "count": 9
+        },
+        {
+            "date": "2024-11-02",
+            "count": 6
+        },
+        {
+            "date": "2024-11-03",
+            "count": 5
+        },
+        {
+            "date": "2024-11-04",
+            "count": 2
+        }
+    ]
+    """
     query = request.GET.get('query', '').strip()
-    start_date_str = request.GET.get('start_date', None)
-    end_date_str = request.GET.get('end_date', None)
     group_by = request.GET.get('group_by', '1day').strip()
 
-    # 날짜 범위 파라미터 -> datetime 객체로 변환 
-    start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else None
-    end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date() if end_date_str else None
-
-    # 뉴스 검색: query를 사용해 제목과 내용에서 검색어 포함된 뉴스만 필터링
-    news_list = News.objects.filter(
+    # 3. 기본 쿼리셋 생성 (검색어 필터링)
+    queryset = News.objects.filter(
         Q(title__icontains=query) | Q(content__icontains=query)
     ).order_by('-date')
     # print('news_list:\n',news_list[:10])
 
-    # 지정된 날짜 범위로 필터링
-    if start_date:
-        news_list = news_list.filter(date__gte=start_date)
-    if end_date:
-        news_list = news_list.filter(date__lte=end_date)
-
-
-    # 시작 & 끝 날짜 
+    # 시작 끝 날짜 
     min_date = news_list.earliest('date').date
     max_date = news_list.latest('date').date
 
     # agg_by_date 함수로 날짜별 집계 결과를 받음
     date_labels, data_counts = agg_by_date(news_list, group_by, min_date, max_date)
+
     # 날짜별 카운트 결과 반환
     chart_data = [
         {"date": date, "count": count}
@@ -120,7 +129,6 @@ def news_count_chart_api(request):
 
     return Response(chart_data)
 
-# 1+ 날짜 집계 함수
 def agg_by_date(news_list, group_by, min_date, max_date):
     date_labels = []
     data_counts = []
@@ -145,6 +153,11 @@ def agg_by_date(news_list, group_by, min_date, max_date):
     elif group_by == '1week':
 
         date_range = []
+        current_date = min_date
+
+        while current_date <= max_date:
+            date_range.append(current_date)
+            current_date += timedelta(weeks=1)
 
         news_data = (news_list
                      .filter(date__range=[min_date, max_date])
@@ -152,19 +165,6 @@ def agg_by_date(news_list, group_by, min_date, max_date):
                      .values('week')
                      .annotate(count=Count('id'))
                      .order_by('week'))
-        print("======================news_data===========================")
-        print(news_data)
-        print("==========================================================")
-
-        current_date = news_data[0]['week']
-    
-        while current_date <= max_date:
-            date_range.append(current_date)
-            current_date += timedelta(weeks=1)
-
-        print("======================date_range===========================")
-        print(date_range)
-        print("==========================================================")
 
         news_data_dict = {entry['week'].strftime('%Y-%m-%d'): entry['count'] for entry in news_data}
 
@@ -347,46 +347,43 @@ def get_news_api(request):
         'has_previous': current_page.has_previous()
     })
 
+def home(request):
+    """홈 페이지"""
+    try:
+        trending_response = get_trending_keywords_api(request)
+        trending_keywords = trending_response.data.get('keywords', [])
+    except Exception:
+        trending_keywords = []
+    return render(request, 'web/home.html', {'trending_keywords': trending_keywords})
+
 # 트렌딩 키워드 API
 @api_view(['GET'])
 def get_trending_keywords_api(request):
+    """트렌딩 키워드 API"""
     try:
-        # 가장 많이 검색된 키워드 상위 5개
-        trending = SearchHistory.objects.all()[:5]
-        # last_searched 필드로 변경
-        return JsonResponse({
+        trending = SearchHistory.objects.order_by('-count')[:5]
+        return Response({
             'keywords': [
                 {
-                    'keyword': item.keyword, 
+                    'keyword': item.keyword,
                     'count': item.count,
                     'last_searched': item.last_searched.strftime('%Y-%m-%d %H:%M:%S')
-                } 
+                }
                 for item in trending
             ]
         })
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
-def update_search_history(keyword):
-    """검색 기록을 업데이트하거나 생성하는 함수"""
-    try:
-        search_history, created = SearchHistory.objects.get_or_create(
-            keyword=keyword,
-            defaults={'count': 1}
+        print(f"트렌딩 키워드 API 오류: {e}")
+        return Response(
+            {'error': '트렌딩 키워드를 불러오는데 실패했습니다.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-        
-        if not created:
-            search_history.count += 1
-            search_history.save()
-            
-        return search_history
-    except Exception as e:
-        print(f"Error updating search history: {e}")
-        return None
 
 @api_view(['GET'])
 def get_search_suggestions_api(request):
+    """검색어 자동완성 API"""
     query = request.GET.get('query', '').strip()
+    
     if len(query) < 2:
         return JsonResponse({'suggestions': []})
 
@@ -399,7 +396,196 @@ def get_search_suggestions_api(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-# 마우스 오버시 요약 정보 API
+@api_view(['GET'])
+def news_count_chart_api(request):
+    """뉴스 집계 차트 API"""
+    query = request.GET.get('query', '').strip()
+    group_by = request.GET.get('group_by', '1day').strip()
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    try:
+        chart_data = get_news_filter(
+            query=query,
+            group_by=group_by,
+            start_date=start_date,
+            end_date=end_date,
+            for_chart=True
+        )
+
+        response_data = [
+            {
+                "date": item['period'].strftime('%Y-%m-%d'),
+                "count": item['count']
+            }
+            for item in chart_data
+        ]
+
+        return Response(response_data)
+
+    except Exception as e:
+        print(f"차트 데이터 조회 오류: {e}")
+        return Response(
+            {'error': '차트 데이터를 불러오는데 실패했습니다.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def get_news_api(request):
+    """뉴스 목록 API"""
+    try:
+        query = request.GET.get('query', '').strip()
+        date = request.GET.get('date', '').strip() or None
+        group_by = request.GET.get('group_by', '1day').strip()
+        start_date = request.GET.get('start_date', '').strip() or None
+        end_date = request.GET.get('end_date', '').strip() or None
+        page = int(request.GET.get('page', 1))
+        page_size = int(request.GET.get('page_size', 10))
+
+        news_list = get_news_filter(
+            query=query,
+            selected_date=date if not (start_date and end_date) else None,
+            start_date=start_date,
+            end_date=end_date,
+            group_by=group_by
+        )
+
+        paginator = Paginator(news_list, page_size)
+        try:
+            current_page = paginator.page(page)
+        except:
+            return Response({
+                'news_list': [],
+                'total_count': 0,
+                'current_page': page,
+                'total_pages': 0,
+                'has_next': False,
+                'has_previous': False
+            })
+
+        return Response({
+            'news_list': [
+                {
+                    'id': news.id,
+                    'title': news.title,
+                    'content': news.content,
+                    'press': news.press,
+                    'date': news.date.strftime('%Y-%m-%d'),
+                    'link': news.link
+                }
+                for news in current_page.object_list
+            ],
+            'total_count': news_list.count(),
+            'current_page': page,
+            'total_pages': paginator.num_pages,
+            'has_next': current_page.has_next(),
+            'has_previous': current_page.has_previous()
+        })
+
+    except Exception as e:
+        print(f"뉴스 목록 조회 오류: {e}")
+        return Response(
+            {'error': '뉴스 목록을 불러오는데 실패했습니다.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+def get_summary_api(request):
+    """뉴스 요약 API"""
+    try:
+        query = request.GET.get('query', '').strip()
+        date = request.GET.get('date', '').strip()
+        group_by = request.GET.get('group_by', '1day').strip()
+        start_date = request.GET.get('start_date', '').strip() or None
+        end_date = request.GET.get('end_date', '').strip() or None
+
+        # date가 빈 문자열이면 None으로 설정
+        date = date or None
+        
+        news_list = get_news_filter(
+            query=query,
+            selected_date=date if not (start_date and end_date) else None,
+            start_date=start_date,
+            end_date=end_date,
+            group_by=group_by
+        )
+
+        if date:
+            try:
+                date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+                if group_by == '1week':
+                    period_start = date_obj - timedelta(days=date_obj.weekday())
+                elif group_by == '1month':
+                    period_start = date_obj.replace(day=1)
+                else:
+                    period_start = date_obj
+            except ValueError:
+                period_start = None
+        else:
+            period_start = None
+            if start_date:
+                try:
+                    period_start = datetime.strptime(start_date, '%Y-%m-%d').date()
+                except ValueError:
+                    period_start = None
+
+        # 캐시된 요약 확인
+        saved_summary = None
+        if period_start:
+            saved_summary = NewsSummary.objects.filter(
+                keyword=query,
+                date=period_start,
+                group_by=group_by
+            ).first()
+
+        if saved_summary:
+            return Response({
+                'background': saved_summary.background,
+                'core_content': saved_summary.core_content,
+                'conclusion': saved_summary.conclusion,
+                'cached': True
+            })
+
+        # 최대 50개의 뉴스로 제한하여 요약 생성
+        news_data = [{'title': news.title, 'content': news.content} for news in news_list[:50]]
+
+        if not news_data:
+            return Response({
+                'background': '검색된 뉴스가 없습니다.',
+                'core_content': '검색 조건을 변경해보세요.',
+                'conclusion': '',
+                'is_empty': True
+            })
+
+        llm_service = LLMService()
+        summary = llm_service.generate_structured_summary(
+            news_data,
+            search_keyword=query,
+            is_overall=not bool(date)
+        )
+
+        # 요약 결과 캐시 저장
+        if period_start:
+            NewsSummary.objects.create(
+                keyword=query,
+                date=period_start,
+                group_by=group_by,
+                background=summary['background'],
+                core_content=summary['core_content'],
+                conclusion=summary['conclusion']
+            )
+
+        return Response(summary)
+
+    except Exception as e:
+        print(f"요약 생성 오류: {e}")
+        return Response({
+            'background': '요약 생성 중 오류가 발생했습니다.',
+            'core_content': '잠시 후 다시 시도해주세요.',
+            'conclusion': '',
+            'is_error': True
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 @api_view(['GET'])
 def get_hover_summary(request, date):
    try:
@@ -429,25 +615,3 @@ def get_hover_summary(request, date):
            }, 
            status=status.HTTP_500_INTERNAL_SERVER_ERROR
        )
-   
-# 뉴스 팝업 창 위한 목록 저장 api
-def news_detail_api(request, news_id):
-    try:
-        # 제목으로 뉴스 항목을 조회
-        news_item = News.objects.get(id=news_id)
-        
-        # JSON 형식으로 응답할 데이터 준비
-        data = {
-            'title': news_item.title,
-            'content': news_item.content,
-            'press': news_item.press,
-            'author': news_item.author,
-            'image': news_item.image if news_item.image else None,
-            'link': news_item.link
-        }
-        
-        # JSON 응답
-        return JsonResponse(data)
-    
-    except News.DoesNotExist:
-        return JsonResponse({'error': '뉴스를 찾을 수 없습니다.'}, status=404)

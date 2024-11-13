@@ -2,16 +2,21 @@ class NewsListHandler {
     constructor() {
         this.newsListContainer = document.getElementById('news-list');
         this.newsCountElement = document.getElementById('news-count');
-        this.searchQuery = this.getQueryFromURL(); // URL에서 쿼리 파라미터로 검색어 설정
-        this.currentDate = this.getDateFromURL(); // URL에서 날짜 파라미터 추출
+        this.searchQuery = '';
+        this.currentDate = null;
         this.currentPage = 1;
         this.pageSize = 10;
         this.loading = false;
         this.hasNextPage = true;
-        this.cache = {};  // 캐시 객체 추가
+        this.cache = {};
 
-        // 초기 데이터 로드
-        this.fetchNews();
+        // URL에서 초기 값 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        this.searchQuery = urlParams.get('query') || '';
+        this.currentDate = urlParams.get('date') || null;
+        this.startDate = urlParams.get('start_date') || null;
+        this.endDate = urlParams.get('end_date') || null;
+        this.groupBy = urlParams.get('group_by') || '1day';
 
         // Intersection Observer 설정
         this.observer = new IntersectionObserver((entries) => {
@@ -23,30 +28,79 @@ class NewsListHandler {
 
         // chartDateClick 이벤트 리스너
         document.addEventListener('chartDateClick', (e) => {
-            const { date } = e.detail;
-            if (date !== this.currentDate) {
-                this.handleDateClick(date);
-            }
+            const { date, query, startDate, endDate, groupBy } = e.detail;
+            this.handleDateClick({
+                detail: {
+                    date,
+                    query,
+                    startDate,
+                    endDate,
+                    groupBy
+                }
+            });
         });
+
+        // 초기 데이터 로드
+        if (this.searchQuery) {
+            this.fetchNews();
+        }
     }
 
-    // URL에서 쿼리 파라미터(query) 추출
-    getQueryFromURL() {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('query') || ''; // query 파라미터가 없으면 빈 문자열 반환
-    }
-
-    // URL에서 날짜 파라미터 추출
+    // URL에서 날짜 추출
     getDateFromURL() {
         const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get('date') || null;
+        return urlParams.get('date') || null;  // URL에서 date 파라미터 추출
+    }
+
+    async handleDateClick(date) {
+        if (this.currentDate === date) {
+            return; // 같은 날짜 중복 클릭 방지
+        }
+        
+        this.currentDate = date;
+        this.resetList();
+        await this.fetchNews();
+    }
+
+    async handleSearch(query) {
+        this.currentDate = date;  // 선택된 날짜로 업데이트
+        this.searchQuery = query;
+        this.resetList();
+
+        try {
+            const response = await fetch(`/api/v2/news/?query=${encodeURIComponent(query)}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || '검색 중 오류가 발생했습니다.');
+            }
+
+            await this.updateNewsList(data);
+        } catch (error) {
+            console.error('Error searching news:', error);
+            this.showError('검색 결과를 불러오는데 실패했습니다.');
+        }
+    }
+
+    handleDateClick(date) {
+        // 클릭된 날짜가 있을 때만 날짜를 업데이트하고 데이터 로드
+        if (date) {
+            this.currentDate = date;
+            this.resetList();
+            this.fetchNews();
+        } else {
+            // 날짜가 없을 때는 초기화 후 전체 데이터를 로드
+            this.currentDate = null;
+            this.resetList();
+            this.fetchNews();
+        }
     }
 
     resetList() {
         this.currentPage = 1;
         this.hasNextPage = true;
         this.loading = false;
-        this.cache = {};  // 캐시 초기화
+        this.cache = {};
         this.newsListContainer.innerHTML = '';
     }
 
@@ -54,11 +108,10 @@ class NewsListHandler {
         if (this.loading || !this.hasNextPage) return;
         this.loading = true;
 
-        // 캐시에 페이지 데이터가 있는지 확인
-        const cacheKey = `${this.searchQuery}_${this.currentDate}_${this.currentPage}`;
+        const cacheKey = this.getCacheKey();
         if (this.cache[cacheKey]) {
             this.renderNewsList(this.cache[cacheKey].news_list);
-            this.newsCountElement.innerText = `총 ${this.cache[cacheKey].total_count}개 뉴스`;
+            this.updateNewsCount(this.cache[cacheKey].total_count);
             this.currentPage++;
             this.hasNextPage = this.cache[cacheKey].has_next;
             this.loading = false;
@@ -66,28 +119,60 @@ class NewsListHandler {
         }
 
         try {
-            // `currentDate`가 있으면 해당 날짜로 필터링
+            // `currentDate`가 없으면 date 파라미터를 제외
             const url = this.currentDate
                 ? `/api/v2/news/?query=${encodeURIComponent(this.searchQuery)}&date=${this.currentDate}&page=${this.currentPage}&page_size=${this.pageSize}`
                 : `/api/v2/news/?query=${encodeURIComponent(this.searchQuery)}&page=${this.currentPage}&page_size=${this.pageSize}`;
             
             const response = await fetch(url);
             const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || '뉴스를 불러오는데 실패했습니다.');
+            }
     
             if (data.news_list && data.news_list.length > 0) {
                 this.cache[cacheKey] = data;
                 this.renderNewsList(data.news_list);
-                this.newsCountElement.innerText = `총 ${data.total_count}개 뉴스`;
+                this.updateNewsCount(data.total_count);
                 this.currentPage++;
                 this.hasNextPage = data.has_next;
             } else {
                 this.hasNextPage = false;
+                if (this.currentPage === 1) {
+                    this.showEmptyMessage();
+                }
             }
         } catch (error) {
             console.error('뉴스 데이터를 가져오는 중 오류 발생:', error);
+            this.showError(error.message);
         } finally {
             this.loading = false;
         }
+    }
+
+    getCacheKey() {
+        return `${this.searchQuery}_${this.currentDate}_${this.startDate}_${this.endDate}_${this.groupBy}_${this.currentPage}`;
+    }
+
+    updateNewsCount(count) {
+        if (this.newsCountElement) {
+            this.newsCountElement.innerText = `총 ${count}개 뉴스`;
+        }
+    }
+
+    showEmptyMessage() {
+        const emptyMessage = document.createElement('div');
+        emptyMessage.className = 'text-center py-8 text-gray-500';
+        emptyMessage.innerHTML = '검색된 뉴스가 없습니다.';
+        this.newsListContainer.appendChild(emptyMessage);
+    }
+
+    showError(message) {
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'text-center py-8 text-red-500';
+        errorMessage.innerHTML = message;
+        this.newsListContainer.appendChild(errorMessage);
     }
 
     renderNewsList(newsList) {
