@@ -7,14 +7,12 @@
     <section class="mb-8">
         <div class="bg-white rounded-lg shadow-sm p-6">
             <!-- 날짜 필터 -->
-            <input type="date" id="startDate" />
-            <input type="date" id="endDate" />
-            <label for="filter"></label>
-            <select name="languages" id="date_filter">
-                <option value="1day" {% if group_by == "1day" %}selected{% endif %}>일(day)</option>
-                <option value="1week" {% if group_by == "1week" %}selected{% endif %}>주(week)</option>
-                <option value="1month" {% if group_by == "1month" %}selected{% endif %}>월(month)</option>
-            </select>
+            <label for="filter">필터 1</label>
+                <select name="languages" id="date_filter">
+                    <option value="1day" {% if group_by == "1day" %}selected{% endif %}>일(day)</option>
+                    <option value="1week" {% if group_by == "1week" %}selected{% endif %}>주(week)</option>
+                    <option value="1month" {% if group_by == "1month" %}selected{% endif %}>월(month)</option>
+                </select>
             <div class="aspect-w-16 aspect-h-9">
                 <canvas id="timeline-chart"></canvas>
             </div>
@@ -44,22 +42,42 @@
             <div id="news-count" class="text-sm text-gray-500"></div>
         </div>
         <div id="news-list" class="news-list space-y-4 p-6" style="height: 500px; overflow-y: auto;">
-            <!-- 뉴스 목록은 자바스크립트로 동적 추가 -->
         </div>
     </section>
-</main> 
+</main>
 
-<!-- 호버 팝업을 위한 스타일 -->
 <style>
-    #hover-summary {
+    .chartjs-tooltip {
+        z-index: 1000;
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         pointer-events: none;
-        animation: fadeIn 0.2s ease-out;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+    input[type="date"] {
+        min-width: 130px;
+    }
+
+    .chart-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .toast-message {
+        z-index: 9999;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
 </style>
 {% endblock %}
@@ -105,4 +123,4 @@
         // console.log(issuePulseChart)
     });
 </script>
-{% endblock %}`
+{% endblock %}
