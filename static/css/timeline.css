@@ -1,8 +1,0 @@
-#chart-summary {
-    transition: opacity 0.2s ease;
-    margin-top: 1rem;
-}
-
-#chart-summary.hidden {
-    display: none;
-}
