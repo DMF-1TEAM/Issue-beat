@@ -39,6 +39,10 @@ def search_view(request):
 
 def get_news_filter(query, group_by='1day', start_date=None, end_date=None, selected_date=None, for_chart=False):
     """뉴스 데이터를 필터링하고 집계하는 공통 함수"""
+
+    print("Start Date:", start_date)
+    print("End Date:", end_date)
+
     # 기본 날짜 범위 설정 (1년)
     if not end_date:
         end_date = datetime.now().date()
@@ -69,10 +73,6 @@ def get_news_filter(query, group_by='1day', start_date=None, end_date=None, sele
             start_date = end_date = date_obj
 
     queryset = queryset.filter(date__range=[start_date, end_date])
-    print("========================queryset===================================")
-    print(queryset)
-    print("====================================================================")
-
 
     # 차트를 위한 데이터 집계
     if for_chart:
@@ -134,15 +134,17 @@ def news_count_chart_api(request):
     """뉴스 집계 차트 API"""
     query = request.GET.get('query', '').strip()
     group_by = request.GET.get('group_by', '1day').strip()
-    
+    start_date = request.GET.get('start_date','')
+    end_date = request.GET.get('end_date', '')
+
     try:
         chart_data = get_news_filter(
             query=query,
             group_by=group_by,
+            start_date=start_date,
+            end_date=end_date,
             for_chart=True  # 차트용 데이터 요청
         )
-        print("=======================chart_data========================")
-        print("chart_data: \n", chart_data)
 
         response_data = [
             {
@@ -151,13 +153,11 @@ def news_count_chart_api(request):
             }
             for item in chart_data
         ]
-        print("=====================response_data==========================")
-        print("response_data: \n", response_data)
 
         return Response(response_data)
 
     except Exception as e:
-        print(f"차트 데이터 조회 오류: {e}")
+        print(f"차트 데이터 전송 오류: {e}")
         return Response(
             {'error': '차트 데이터를 불러오는데 실패했습니다.'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR

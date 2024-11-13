@@ -7,8 +7,8 @@
     <section class="mb-8">
         <div class="bg-white rounded-lg shadow-sm p-6">
             <!-- 날짜 필터 -->
-            <input type="date" id="startDate" />
-            <input type="date" id="endDate" />
+            <input type="date" id="start_date" name="start_date" />
+            <input type="date" id="end_date" name="end_date" />
             <label for="filter"></label>
             <select name="languages" id="date_filter">
                 <option value="1day" {% if group_by == "1day" %}selected{% endif %}>일(day)</option>
