@@ -54,6 +54,7 @@ class IssuePulseChart {
         }
     }
 
+    
     // 초기화 처리를 위한 간단한 메서드 추가
     handleReset() {
         // URL에서 query만 유지하고 페이지 새로고침
