@@ -154,6 +154,8 @@ def news_count_chart_api(request):
             for item in chart_data
         ]
 
+        print(response_data)
+        
         return Response(response_data)
 
     except Exception as e:

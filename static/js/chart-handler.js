@@ -3,8 +3,8 @@ class IssuePulseChart {
 
         // 객체가 처음 생성될 때 가져오는 초기값
         this.chart = null;
-        this.startDate = document.getElementById("startDate").value;        // 날짜 범위 생성
-        this.endDate = document.getElementById("endDate").value;            // 날짜 범위 생성
+        this.startDate = document.getElementById("start_date").value;        // 날짜 범위 생성
+        this.endDate = document.getElementById("end_date").value;            // 날짜 범위 생성
         this.groupBy="1day";                                                // 날짜 기준 집계
         this.selectedDate = null;                                           // 특정 일자 클릭
         this.searchQuery = new URLSearchParams(window.location.search).get('query') || '';        
@@ -14,18 +14,6 @@ class IssuePulseChart {
         this.setupClickEvent();
         this.setupFilterEvent();
         this.setupDateRangeEvent();
-
-        // Date picker 초기화
-        // flatpickr("#startDate", { 
-        //     dateFormat: "Y-m-d", 
-        //     onChange: this.handleDateChange.bind(this) // 날짜가 변경될 때 이벤트 핸들러 실행
-        // });
-        // flatpickr("#endDate", { 
-        //     dateFormat: "Y-m-d", 
-        //     onChange: this.handleDateChange.bind(this) // 날짜가 변경될 때 이벤트 핸들러 실행
-        // });
-
-        // 이벤트 발생 시 데이터 전달을 위한 상태 추가
         this.currentState = {
             date: null,
             query: this.searchQuery
@@ -100,8 +88,8 @@ class IssuePulseChart {
 
     // 날짜 범위 필터
     setupDateRangeEvent(){
-        const startDateInput = document.getElementById("startDate");
-        const endDateInput = document.getElementById("endDate");
+        const startDateInput = document.getElementById("start_date");
+        const endDateInput = document.getElementById("end_date");
         
         if (startDateInput && endDateInput){
             // 사용자가 시작날짜 변경 시 이벤트 발생
@@ -165,7 +153,7 @@ class IssuePulseChart {
     // 날짜 집계 기준(일/주/월) 필터
     setupFilterEvent() {
         // 필터 html 요소 가져오기
-        const filterSelect = document.getElementById('date_filter');
+        const filterSelect = document.getElementById('group_by');
         console.log("add event")
 
         // #date_filter가 존재하는지 확인
