@@ -49,25 +49,46 @@ class SearchHistory(models.Model):
         return f"{self.keyword} ({self.count})"
     
 class NewsSummary(models.Model):
+    """3단 요약을 위한 모델"""
     keyword = models.CharField(max_length=200)
     date = models.DateField(null=True, blank=True)
+    group_by = models.CharField(
+        max_length=10, 
+        default='1day',
+        choices=[
+            ('1day', '일간'),
+            ('1week', '주간'),
+            ('1month', '월간')
+        ]
+    )
     background = models.TextField()
     core_content = models.TextField()
     conclusion = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        unique_together = ['keyword', 'date']
+        unique_together = ['keyword', 'date', 'group_by']
         indexes = [
-            models.Index(fields=['keyword', 'date']),
+            models.Index(fields=['keyword', 'date', 'group_by']),
         ]
     
     def __str__(self):
-        return f"{self.keyword} - {self.date or 'overall'}"
+        period = self.date or 'overall'
+        return f"{self.keyword} - {period} ({self.group_by})"
     
 class DailySummary(models.Model):
+    """차트 호버 요약을 위한 모델"""
     date = models.DateField()
     query = models.CharField(max_length=200, null=True, blank=True)
+    group_by = models.CharField(
+        max_length=10, 
+        default='1day',
+        choices=[
+            ('1day', '일간'),
+            ('1week', '주간'),
+            ('1month', '월간')
+        ]
+    )
     title_summary = models.CharField(max_length=100)
     content_summary = models.TextField()
     news_count = models.IntegerField()
@@ -76,9 +97,9 @@ class DailySummary(models.Model):
     
     class Meta:
         indexes = [
-            models.Index(fields=['date']),
-            models.Index(fields=['query']),
+            models.Index(fields=['date', 'query', 'group_by']),
         ]
 
     def __str__(self):
-        return f"{self.date} - {self.query if self.query else 'All'}"
+        query_str = self.query if self.query else 'All'
+        return f"{self.date} - {query_str} ({self.group_by})"

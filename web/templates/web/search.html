@@ -6,24 +6,62 @@
     <!-- 차트 섹션 -->
     <section class="mb-8">
         <div class="bg-white rounded-lg shadow-sm p-6">
-            <!-- 날짜 필터 -->
-            <div class="mb-4">
-                <label for="date_filter" class="text-sm font-medium text-gray-700">기간 선택</label>
-                <select name="languages" id="date_filter" class="ml-2 p-1 border rounded">
-                    <option value="1day" {% if group_by == "1day" %}selected{% endif %}>일(day)</option>
-                    <option value="1week" {% if group_by == "1week" %}selected{% endif %}>주(week)</option>
-                    <option value="1month" {% if group_by == "1month" %}selected{% endif %}>월(month)</option>
+            <!-- 필터 컨테이너 -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <!-- 날짜 범위 필터 -->
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex items-center space-x-2">
+                        <label for="start_date" class="text-sm font-medium text-gray-700">시작일</label>
+                        <input type="date" 
+                               id="start_date"
+                               name="start_date" 
+                               class="p-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label for="end_date" class="text-sm font-medium text-gray-700">종료일</label>
+                        <input type="date" 
+                               id="end_date"
+                               name="end_date" 
+                               class="p-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+                    <button id="applyDateRange" 
+                            class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
+                        적용
+                    </button>
+                </div>
+
+                <!-- 기간 단위 선택 -->
+                <div class="flex items-center space-x-2">
+                    <label for="date_filter" class="text-sm font-medium text-gray-700">단위</label>
+                    <select id="date_filter" 
+                            class="p-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="1day" {% if group_by == "1day" %}selected{% endif %}>일간</option>
+                        <option value="1week" {% if group_by == "1week" %}selected{% endif %}>주간</option>
+                        <option value="1month" {% if group_by == "1month" %}selected{% endif %}>월간</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <select id="date_filter" class="form-select rounded-md border-gray-300">
+                    <option value="1day">일간</option>
+                    <option value="1week">주간</option>
+                    <option value="1month">월간</option>
                 </select>
+                
+                <button id="resetView" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    전체 보기
+                </button>
             </div>
-            
+
             <!-- 차트 컨테이너 -->
-            <div class="chart-container w-full" style="position: relative; height: 400px;">
+            <div class="chart-container relative w-full" style="height: 400px;">
                 <canvas id="timeline-chart"></canvas>
-            </div>
-    
-            <!-- 차트 아래에 요약 정보가 표시될 영역 -->
-            <div id="chart-summary" class="hidden mt-4 p-4 border-t border-gray-200">
-                <!-- 요약 정보는 JavaScript에서 동적으로 추가됨 -->
             </div>
         </div>
     </section>
@@ -51,10 +89,9 @@
             <div id="news-count" class="text-sm text-gray-500"></div>
         </div>
         <div id="news-list" class="news-list space-y-4 p-6" style="height: 500px; overflow-y: auto;">
-            <!-- 뉴스 목록은 자바스크립트로 동적 추가 -->
         </div>
     </section>
-</main> 
+</main>
 
 <style>
     .chartjs-tooltip {
@@ -65,14 +102,29 @@
         pointer-events: none;
     }
 
+    input[type="date"] {
+        min-width: 130px;
+    }
+
     .chart-container {
         position: relative;
         width: 100%;
-        height: 400px;
     }
 
-    #timeline-chart {
-        background: white;
+    .toast-message {
+        z-index: 9999;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
 </style>
 {% endblock %}
@@ -108,7 +160,6 @@
         if (searchQuery) {
             // 요약 핸들러 초기화 및 데이터 로드
             window.summaryHandler = new SummaryHandler();
-            window.summaryHandler.showLoading(); // 여기에 로딩 표시 추가
             const today = new Date().toISOString().split('T')[0];
             window.summaryHandler.updateSummary(searchQuery, today);
         }
@@ -116,6 +167,7 @@
         // 새로운 차트 초기화
         // chart-handler.js에 정의한 IssuePulseChart
         const issuePulseChart = new IssuePulseChart();
+        // console.log(issuePulseChart)
     });
 </script>
-{% endblock %}`
+{% endblock %}
