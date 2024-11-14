@@ -379,3 +379,25 @@ def get_hover_summary(request, date):
             {'error': '요약을 불러오는데 실패했습니다.'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+    
+# 뉴스 팝업 창 위한 목록 저장 api
+def news_detail_api(request, news_id):
+    try:
+        # 제목으로 뉴스 항목을 조회
+        news_item = News.objects.get(id=news_id)
+        
+        # JSON 형식으로 응답할 데이터 준비
+        data = {
+            'title': news_item.title,
+            'content': news_item.content,
+            'press': news_item.press,
+            'author': news_item.author,
+            'image': news_item.image if news_item.image else None,
+            'link': news_item.link
+        }
+        
+        # JSON 응답
+        return JsonResponse(data)
+    
+    except News.DoesNotExist:
+        return JsonResponse({'error': '뉴스를 찾을 수 없습니다.'}, status=404)
