@@ -4,6 +4,9 @@ class NewsListHandler {
         this.newsCountElement = document.getElementById('news-count');
         this.searchQuery = '';
         this.currentDate = null;
+        this.startDate = null;
+        this.endDate = null;
+        this.groupBy = '1day';
         this.currentPage = 1;
         this.pageSize = 10;
         this.loading = false;
@@ -52,23 +55,42 @@ class NewsListHandler {
         return urlParams.get('date') || null;  // URL에서 date 파라미터 추출
     }
 
-    async handleDateClick(date) {
-        if (this.currentDate === date) {
-            return; // 같은 날짜 중복 클릭 방지
+    async handleDateClick(event) {
+        const { date, query, startDate, endDate, groupBy } = event.detail;
+        
+        // 같은 데이터 요청인지 확인
+        if (this.currentDate === date && 
+            this.startDate === startDate && 
+            this.endDate === endDate && 
+            this.groupBy === groupBy) {
+            return;
         }
         
+        // 상태 업데이트
         this.currentDate = date;
+        this.searchQuery = query;  // 이 부분이 누락되어 있었음
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.groupBy = groupBy;
+        
+        console.log('Handling date click:', {
+            date: this.currentDate,
+            query: this.searchQuery,
+            startDate: this.startDate,
+            endDate: this.endDate,
+            groupBy: this.groupBy
+        });
+        
         this.resetList();
         await this.fetchNews();
     }
 
     async handleSearch(query) {
-        this.currentDate = date;  // 선택된 날짜로 업데이트
-        this.searchQuery = query;
+        this.searchQuery = query; // 검색어 업데이트
         this.resetList();
 
         try {
-            const response = await fetch(`/api/v2/news/?query=${encodeURIComponent(query)}`);
+            const response = await fetch(`/api/v2/news/?query=${encodeURIComponent(query)}&date=${this.currentDate}`);
             const data = await response.json();
 
             if (!response.ok) {
@@ -79,20 +101,6 @@ class NewsListHandler {
         } catch (error) {
             console.error('Error searching news:', error);
             this.showError('검색 결과를 불러오는데 실패했습니다.');
-        }
-    }
-
-    handleDateClick(date) {
-        // 클릭된 날짜가 있을 때만 날짜를 업데이트하고 데이터 로드
-        if (date) {
-            this.currentDate = date;
-            this.resetList();
-            this.fetchNews();
-        } else {
-            // 날짜가 없을 때는 초기화 후 전체 데이터를 로드
-            this.currentDate = null;
-            this.resetList();
-            this.fetchNews();
         }
     }
 
@@ -119,11 +127,33 @@ class NewsListHandler {
         }
 
         try {
-            // `currentDate`가 없으면 date 파라미터를 제외
-            const url = this.currentDate
-                ? `/api/v2/news/?query=${encodeURIComponent(this.searchQuery)}&date=${this.currentDate}&page=${this.currentPage}&page_size=${this.pageSize}`
-                : `/api/v2/news/?query=${encodeURIComponent(this.searchQuery)}&page=${this.currentPage}&page_size=${this.pageSize}`;
-            
+            console.log('Fetching news with params:', {
+                query: this.searchQuery,
+                date: this.currentDate,
+                startDate: this.startDate,
+                endDate: this.endDate,
+                groupBy: this.groupBy,
+                page: this.currentPage
+            });
+
+            const url = new URL('/api/v2/news/', window.location.origin);
+            const params = new URLSearchParams({
+                query: this.searchQuery,
+                page: this.currentPage.toString(),
+                page_size: this.pageSize.toString(),
+                group_by: this.groupBy
+            });
+
+            if (this.startDate && this.endDate) {
+                params.append('start_date', this.startDate);
+                params.append('end_date', this.endDate);
+            } else if (this.currentDate) {
+                params.append('date', this.currentDate);
+            }
+
+            url.search = params.toString();
+            console.log('Fetching URL:', url.toString());  // URL 로깅 추가
+
             const response = await fetch(url);
             const data = await response.json();
 

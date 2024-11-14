@@ -18,6 +18,5 @@ urlpatterns = [
     # 추가 기능 API
     path('api/trending/', views.get_trending_keywords_api, name='trending_keywords'),
     path('api/suggestions/', views.get_search_suggestions_api, name='search_suggestions'),
-    path('api/news/hover-summary/<str:date>/', views.get_hover_summary, name='hover_summary'),
-
+    path('api/v2/news/hover-summary/<str:date>/', views.get_hover_summary, name='get_hover_summary'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -14,7 +14,11 @@ from .services.daily_issue_service import DailyIssueService
 
 def home(request):
     """홈 페이지"""
-    trending_keywords = []  # 필요한 데이터를 여기에 추가하세요.
+    try:
+        trending_response = get_trending_keywords_api(request)
+        trending_keywords = trending_response.data.get('keywords', [])
+    except Exception:
+        trending_keywords = []
     return render(request, 'web/home.html', {'trending_keywords': trending_keywords})
 
 def search_view(request):
@@ -33,80 +37,34 @@ def search_view(request):
 
     return render(request, 'web/search.html', {'query': query})
 
-@api_view(['GET'])
-def get_hover_summary(request, date):
-    """마우스 오버시 보여줄 요약 정보를 반환하는 API"""
-    try:
-
-        print(f"Fetching hover summary for date: {date}")  # 디버깅용 로그
-        
-        # 날짜 문자열을 datetime 객체로 변환
-        date_obj = datetime.strptime(date, '%Y-%m-%d').date()
-        
-        # DailyIssueService 인스턴스 생성 및 요약 데이터 가져오기
-        analyzer = DailyIssueService()
-        summary_data = analyzer.get_daily_summary_data(date_obj)
-        
-        print(f"Generated summary data: {summary_data}")  # 디버깅용 로그
-        
-        return Response(summary_data)
-        
-    except ValueError as e:
-        print(f"Date parsing error: {e}")  # 디버깅용 로그
-        return Response(
-            {'error': '잘못된 날짜 형식입니다. (YYYY-MM-DD)'}, 
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    except Exception as e:
-        print(f"Error in get_hover_summary: {e}")  # 디버깅용 로그
-        return Response(
-            {
-                'error': '데이터를 불러오는 중 오류가 발생했습니다.',
-                'detail': str(e) if settings.DEBUG else None
-            }, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-    
-
-# 세개의 영역에 보내줘야하는 데이터
-
-# 1. 뉴스데이터 날짜별 개수 라인차트 보여주기위한 데이터
-# 2. 뉴스 요약 생성
-#     2-1. 전체 기간 요약
-#     2-2. 차트 클릭시 해당 날짜 요약
-# 3. 뉴스 목록(페이지네이션)
-#     3-1. 전체 기간 뉴스 목록
-#     3-2. 차트 클릭시 해당 날짜 뉴스 목록
-
-
-# 1. 날짜별 뉴스건수 (/api/v2/news/chart/?query=keyword&groupby=day)
-@api_view(['GET'])
-def news_count_chart_api(request):
+def get_news_filter(query, group_by='1day', start_date=None, end_date=None, selected_date=None, for_chart=False):
     """
-    - request
-    /api/v2/news/?query=검색어
-    - response
-    [
-        {
-            "date": "2024-11-01",
-            "count": 9
-        },
-        {
-            "date": "2024-11-02",
-            "count": 6
-        },
-        {
-            "date": "2024-11-03",
-            "count": 5
-        },
-        {
-            "date": "2024-11-04",
-            "count": 2
-        }
-    ]
+    뉴스 데이터를 필터링하고 집계하는 공통 함수
     """
-    query = request.GET.get('query', '').strip()
-    group_by = request.GET.get('group_by', '1day').strip()
+    # 1. 날짜 파라미터 처리
+    if isinstance(start_date, str) and start_date:  # 빈 문자열 체크 추가
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        except ValueError:
+            start_date = None
+            
+    if isinstance(end_date, str) and end_date:  # 빈 문자열 체크 추가
+        try:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+        except ValueError:
+            end_date = None
+            
+    if isinstance(selected_date, str) and selected_date:  # 빈 문자열 체크 추가
+        try:
+            selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = None
+
+    # 2. 기본 날짜 범위 설정
+    if not end_date:
+        end_date = datetime.now().date()
+    if not start_date:
+        start_date = end_date - timedelta(days=365)
 
     # 3. 기본 쿼리셋 생성 (검색어 필터링)
     queryset = News.objects.filter(
@@ -309,8 +267,6 @@ def get_news_api(request):
     date = request.GET.get('date', '').strip()
     page = int(request.GET.get('page', 1))
     page_size = int(request.GET.get('page_size', 10))
-    print('================================')
-    print(query, date, page)
 
     # 뉴스 검색
     # 1. 날짜가 주어진 경우 해당 날짜의 키워드 뉴스를 가져옴
@@ -588,30 +544,45 @@ def get_summary_api(request):
 
 @api_view(['GET'])
 def get_hover_summary(request, date):
-   try:
-       print(f"Fetching hover summary for date: {date}")  
-       
-       date_obj = datetime.strptime(date, '%Y-%m-%d').date()
-       
-       analyzer = DailyIssueService()
-       summary_data = analyzer.get_daily_summary_data(date_obj)
-       
-       print(f"Generated summary data: {summary_data}")
-       
-       return Response(summary_data)
-       
-   except ValueError as e:
-       print(f"Date parsing error: {e}")
-       return Response(
-           {'error': '잘못된 날짜 형식입니다. (YYYY-MM-DD)'}, 
-           status=status.HTTP_400_BAD_REQUEST
-       )
-   except Exception as e:
-       print(f"Error in get_hover_summary: {e}")
-       return Response(
-           {
-               'error': '데이터를 불러오는 중 오류가 발생했습니다.',
-               'detail': str(e) if settings.DEBUG else None
-           }, 
-           status=status.HTTP_500_INTERNAL_SERVER_ERROR
-       )
+    """차트 호버 요약 API"""
+    try:
+        query = request.GET.get('query', '').strip()
+        group_by = request.GET.get('group_by', '1day').strip()
+        
+        # 1. 날짜 객체로 변환
+        date_obj = datetime.strptime(date, '%Y-%m-%d').date()
+        
+        # 2. 날짜 범위 계산
+        issue_service = DailyIssueService()
+        start_date, end_date = issue_service.get_period_range(date_obj, group_by)
+
+        # 3. 뉴스 데이터 조회 (전체 기간)
+        news_list = get_news_filter(
+            query=query,
+            start_date=start_date,
+            end_date=end_date,
+            group_by=group_by
+        )
+        
+        # 4. 요약 생성
+        summary_data = issue_service.get_cached_summary(
+            date=date_obj,
+            query=query,
+            group_by=group_by,
+            news_list=news_list
+        )
+        
+        # 5. 응답 데이터 구성
+        response_data = {
+            'date': f"{start_date.strftime('%Y-%m-%d')} ~ {end_date.strftime('%Y-%m-%d')}",
+            **summary_data
+        }
+        
+        return Response(response_data)
+
+    except Exception as e:
+        print(f"호버 요약 조회 오류: {e}")
+        return Response(
+            {'error': '요약을 불러오는데 실패했습니다.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
