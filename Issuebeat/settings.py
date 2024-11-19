@@ -100,9 +100,9 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
         "NAME": "beat",
-        "USER": "admin",
-        "PASSWORD": "1q2w3e4r1!",
-        "HOST": "database-1.cpkg2iwowmfd.ap-northeast-2.rds.amazonaws.com",
+        "USER": os.getenv("DB_USERNAME"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("RDS_URL"),
         "PORT": "3306",
         "OPTIONS" : {
             # 'init_command': 'SET sql_mode="SRICT_TRANS_TABLES',
