@@ -307,6 +307,7 @@ class IssuePulseChart {
     }
 
     async fetchDataAndUpdateChart() {
+        console.log('start============')
         if (!this.searchQuery) return;
 
         try {
@@ -330,10 +331,23 @@ class IssuePulseChart {
                 this.showNoDataMessage();
                 return;
             }
-
+            
             this.chart.data.labels = data.map(item => item.date);
+            console.log(this.chart.data.labels)
             this.chart.data.datasets[0].data = data.map(item => item.count);
+            console.log(this.chart.data.datasets[0].data)
             this.chart.update();
+
+            // 뉴스 목록도 함께 업데이트
+            if (window.newsListHandler) {
+                console.log('fetch data and update chart')
+                console.log(window.newsListHandler)
+                window.newsListHandler.startDate = this.startDate
+                window.newsListHandler.endDate = this.endDate
+                window.newsListHandler.resetList();
+                window.newsListHandler.fetchNews();
+            }
+
         } catch (error) {
             console.error('Error fetching chart data:', error);
             this.showErrorMessage();
@@ -348,10 +362,12 @@ class IssuePulseChart {
         this.updateURL({ group_by: this.groupBy });
         
         // 차트 데이터 업데이트
-        this.fetchDataAndUpdateChart();
+        // this.fetchDataAndUpdateChart();
 
         // 뉴스 리스트 업데이트
         if (window.newsListHandler) {
+            console.log('handle filter change')
+            console.log(window.newsListHandler)
             window.newsListHandler.resetList();
             window.newsListHandler.fetchNews();
         }

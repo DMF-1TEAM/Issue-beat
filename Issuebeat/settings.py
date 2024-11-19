@@ -15,6 +15,9 @@ import os
 from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
+import pymysql  
+
+pymysql.install_as_MySQLdb()
 
 load_dotenv()
 
@@ -90,9 +93,23 @@ WSGI_APPLICATION = 'Issuebeat.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR / 'db.sqlite3',
+    # }
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "beat",
+        "USER": "admin",
+        "PASSWORD": "1q2w3e4r1!",
+        "HOST": "database-1.cpkg2iwowmfd.ap-northeast-2.rds.amazonaws.com",
+        "PORT": "3306",
+        "OPTIONS" : {
+            # 'init_command': 'SET sql_mode="SRICT_TRANS_TABLES',
+            'ssl': {
+                'ca': 'Issuebeat/beat.pem'
+            },
+        }
     }
 }
 
