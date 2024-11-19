@@ -20,4 +20,10 @@ urlpatterns = [
     path('api/v2/news/hover-summary/<str:date>/', views.get_hover_summary, name='get_hover_summary'),
     path('api/news/<int:news_id>', views.news_detail_api, name='news_detail_api'),
 
+<<<<<<< HEAD
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+=======
+    path('test/', views.test, name='test')
+
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+>>>>>>> origin

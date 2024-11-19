@@ -68,9 +68,9 @@ class NewsSummary(models.Model):
     
     class Meta:
         unique_together = ['keyword', 'date', 'group_by']
-        indexes = [
-            models.Index(fields=['keyword', 'date', 'group_by']),
-        ]
+        # indexes = [
+        #     models.Index(fields=['keyword', 'date', 'group_by']),
+        # ]
     
     def __str__(self):
         period = self.date or 'overall'

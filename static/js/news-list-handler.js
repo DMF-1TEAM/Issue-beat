@@ -258,7 +258,6 @@ class NewsListHandler {
         });
     }
     
-    // 팝업 창 생성 함수
     showPopup(data) {
         const popup = document.createElement('div');
         popup.classList.add('popup');
@@ -303,7 +302,11 @@ class NewsListHandler {
         popup.querySelector('.close-button').addEventListener('click', () => {
             popup.remove();
         });
-        
+    
+        // 닫기 버튼 클릭 시 팝업 닫기
+        popup.querySelector('.close-button').addEventListener('click', closePopup);
+    
+        // 팝업을 화면에 추가 및 스크롤 잠금
         document.body.appendChild(popup);
     }
     
