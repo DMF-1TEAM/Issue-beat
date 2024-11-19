@@ -2,10 +2,19 @@
 {% load static %} 
 
 {% block content %}
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="main">
     <!-- 차트 섹션 -->
     <section class="mb-8">
         <div class="bg-white rounded-lg shadow-sm p-6">
+            <!-- 이슈 헤더 섹션 -->
+            <div class="flex items-start space-x-8 mb-8 pb-4 border-b border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-900 flex items-center space-x-2">
+                    '<span id="quick-summary-keyword"></span>' 관련 이슈
+                </h2>
+                <p id="quick-summary-content" class="text-base text-gray-600 flex-1">
+                    <!-- 요약 내용이 여기에 들어갑니다 -->
+                </p>
+            </div>
             <!-- 필터 컨테이너 -->
             <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                 <!-- 날짜 범위 필터 -->
@@ -220,6 +229,7 @@
 <script src="{% static 'js/news-list-handler.js' %}"></script>
 <script src="{% static 'js/chart-handler.js' %}"></script>
 <script src="{% static 'js/summary-handler.js' %}"></script>
+<script src="{% static 'js/quick-summary-handler.js' %}"></script>
  
 <script>
     document.addEventListener('DOMContentLoaded', () => {
