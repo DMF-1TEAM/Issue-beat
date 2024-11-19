@@ -101,7 +101,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.mysql",
         "NAME": "beat",
         "USER": "admin",
-        "PASSWORD": "1q2w3e4r1!",
+        "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": "database-1.cpkg2iwowmfd.ap-northeast-2.rds.amazonaws.com",
         "PORT": "3306",
         "OPTIONS" : {
