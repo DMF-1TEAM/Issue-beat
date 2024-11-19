@@ -258,53 +258,39 @@ class NewsListHandler {
         });
     }
     
-    // 팝업 창 생성 함수
     showPopup(data) {
         const popup = document.createElement('div');
-        popup.classList.add('popup');
-        
+        popup.className = 'popup';
+    
         popup.innerHTML = `
             <div class="popup-content">
-                <div class="article-header">
-                    <h2 class="article-title" style="font-size: 2.2rem !important; font-weight: 700 !important;">${data.title}</h2>
-                    <div class="press-info" style="font-size: 1.3rem !important; color: #666 !important; margin-bottom: 2rem !important;">
-                        <span style="font-weight: 500 !important;">${data.press}</span>
-                        ${data.author ? `<span style="margin-left: 10px; font-weight: 500 !important;">${data.author}</span>` : ''}
-                    </div>
-                    <a href="${data.link}" 
-                       target="_blank" 
-                       class="original-link"
-                       style="position: absolute !important; top: 0.2rem !important; right: 2rem !important; color: #2563eb; display: flex; align-items: center; text-decoration: none;">
-                        원문 보기
-                        <svg style="width: 16px; height: 16px; margin-left: 4px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                    </a>
-                </div>
-    
-                ${data.image ? `
-                    <div style="margin-top: 2rem; text-align: center;">
-                        <img src="${data.image}" alt="뉴스 이미지" style="max-width: 100%; height: auto; margin: 0 auto;">
-                    </div>
-                ` : ''}
-    
-                <div style="margin-top: 2rem; line-height: 1.8; color: #333; margin-bottom: 4rem;">
-                    ${data.content}
-                </div>
-    
-                <button class="close-button"
-                        style="position: absolute !important; bottom: 2rem !important; right: 2rem !important; background-color: #ef4444; color: white; padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer;">
-                    닫기
-                </button>
+                <a href="${data.link}" target="_blank" class="original-link">원문 보기</a>
+                <h1 class="article-title">${data.title}</h1>
+                <div class="press-info">${data.press} ${data.author ? `| ${data.author}` : ''}</div>
+                ${data.image ? `<img src="${data.image}" alt="Article Image" class="">` : ''}
+                <div class="article-content">${data.content}</div>
+                <button class="close-button">닫기</button>
             </div>
         `;
-        
-        popup.querySelector('.close-button').addEventListener('click', () => {
-            popup.remove();
-        });
-        
-        document.body.appendChild(popup);
-    }
     
+        // 팝업 닫기 함수
+        function closePopup() {
+            document.body.removeChild(popup);
+            document.body.style.overflow = 'auto'; // 화면 스크롤 복원
+        }
+    
+        // 배경 클릭 시 팝업 닫기
+        popup.addEventListener('click', function (e) {
+            if (e.target === popup) {
+                closePopup();
+            }
+        });
+    
+        // 닫기 버튼 클릭 시 팝업 닫기
+        popup.querySelector('.close-button').addEventListener('click', closePopup);
+    
+        // 팝업을 화면에 추가 및 스크롤 잠금
+        document.body.appendChild(popup);
+        document.body.style.overflow = 'hidden'; // 배경 스크롤 방지
+    }
 }
