@@ -7,7 +7,7 @@ class News(models.Model):
     press = models.CharField(max_length=20)
     author = models.CharField(max_length=20)
     content = models.TextField()
-    keyword = models.TextField()
+    keyword = models.CharField(max_length=1000000)
     image = models.TextField()
     link = models.TextField()
 
@@ -15,8 +15,8 @@ class News(models.Model):
         indexes = [
             models.Index(fields=['date', 'press']),
             models.Index(fields=['date', '-press']),
-            models.Index(fields=['keyword']),
-            models.Index(fields=['date', 'keyword']),
+            # models.Index(fields=['keyword']),
+            # models.Index(fields=['date', 'keyword']),
         ]
         
     @classmethod
@@ -68,9 +68,15 @@ class NewsSummary(models.Model):
     
     class Meta:
         unique_together = ['keyword', 'date', 'group_by']
+<<<<<<< HEAD
         indexes = [
             models.Index(fields=['keyword', 'date', 'group_by']),
         ]
+=======
+        # indexes = [
+        #     models.Index(fields=['keyword', 'date', 'group_by']),
+        # ]
+>>>>>>> master
     
     def __str__(self):
         period = self.date or 'overall'

@@ -2,6 +2,7 @@ class IssuePulseChart {
     constructor() {
         // 기본 상태 초기화
         this.chart = null;
+<<<<<<< HEAD
         this.searchQuery = new URLSearchParams(window.location.search).get('query') || '';
         this.groupBy = new URLSearchParams(window.location.search).get('group_by') || '1day';
 
@@ -20,6 +21,11 @@ class IssuePulseChart {
         this.tooltipTimeout = null;
 
         // 컴포넌트 초기화
+=======
+        this.groupBy = '1day';
+        this.selectedDate = null;
+        this.searchQuery = new URLSearchParams(window.location.search).get('query') || '';        
+>>>>>>> master
         this.initChart();
         this.setupEventListeners();
         this.fetchDataAndUpdateChart();
@@ -54,7 +60,10 @@ class IssuePulseChart {
         }
     }
 
+<<<<<<< HEAD
     
+=======
+>>>>>>> master
     // 초기화 처리를 위한 간단한 메서드 추가
     handleReset() {
         // URL에서 query만 유지하고 페이지 새로고침

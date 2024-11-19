@@ -12,6 +12,12 @@ from .models import News, SearchHistory, NewsSummary, DailySummary
 from .services.llm_service import LLMService
 from .services.daily_issue_service import DailyIssueService
 
+def test(request):
+    news = News.objects.all()
+    print(news)
+
+    return None
+
 def home(request):
     """홈 페이지"""
     try:
@@ -296,13 +302,22 @@ def get_summary_api(request):
             })
 
         # 최대 50개의 뉴스로 제한하여 요약 생성
+<<<<<<< HEAD
         news_data = [{'title': news.title, 'content': news.content} for news in news_list[:50]]
+=======
+        news_data = [{'title': news.title, 'content': news.content} for news in news_list[::5]]
+>>>>>>> master
 
         if not news_data:
             return Response({
                 'background': '검색된 뉴스가 없습니다.',
+<<<<<<< HEAD
                 'core_content': '검색 조건을 변경해보세요.',
                 'conclusion': '',
+=======
+                'core_content': '검색된 뉴스가 없습니다.',
+                'conclusion': '검색된 뉴스가 없습니다.',
+>>>>>>> master
                 'is_empty': True
             })
 
@@ -330,8 +345,13 @@ def get_summary_api(request):
         print(f"요약 생성 오류: {e}")
         return Response({
             'background': '요약 생성 중 오류가 발생했습니다.',
+<<<<<<< HEAD
             'core_content': '잠시 후 다시 시도해주세요.',
             'conclusion': '',
+=======
+            'core_content': '요약 생성 중 오류가 발생했습니다.',
+            'conclusion': '요약 생성 중 오류가 발생했습니다.',
+>>>>>>> master
             'is_error': True
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
