@@ -23,16 +23,46 @@ class IssuePulseChart {
         this.initChart();
         this.setupEventListeners();
         this.fetchDataAndUpdateChart();
-        this.setupClickEvent();
-        this.setupFilterEvent()
-        // 이벤트 발생 시 데이터 전달을 위한 상태 추가
-        this.currentState = {
-            date: null,
-            query: this.searchQuery
+    }
+
+    setupEventListeners() {
+        // 필터 변경 이벤트
+        const filterSelect = document.getElementById('date_filter');
+        if (filterSelect) {
+            filterSelect.value = this.groupBy;
+            filterSelect.addEventListener('change', this.handleFilterChange.bind(this));
+        }
+
+        // 날짜 범위 이벤트
+        const startDateInput = document.getElementById("start_date");
+        const endDateInput = document.getElementById("end_date");
+        const applyButton = document.getElementById("applyDateRange");
+        
+        if (startDateInput && endDateInput && applyButton) {
+            startDateInput.value = this.startDate;
+            endDateInput.value = this.endDate;
+
+            startDateInput.addEventListener("change", this.handleStartDateChange.bind(this));
+            endDateInput.addEventListener("change", this.handleEndDateChange.bind(this));
+            applyButton.addEventListener("click", this.handleDateRangeApply.bind(this));
+        }
+
+         // 초기화 버튼 이벤트 리스너 추가
+        const resetButton = document.getElementById('resetView');
+        if (resetButton) {
+            resetButton.addEventListener('click', this.handleReset.bind(this));
         }
     }
 
-    // 차트 초기화
+    
+    // 초기화 처리를 위한 간단한 메서드 추가
+    handleReset() {
+        // URL에서 query만 유지하고 페이지 새로고침
+        const searchParams = new URLSearchParams();
+        searchParams.set('query', this.searchQuery);
+        window.location.href = `${window.location.pathname}?${searchParams.toString()}`;
+    }
+
     initChart() {
         const ctx = document.getElementById('timeline-chart').getContext('2d');
         if (this.chart) {
