@@ -18,8 +18,8 @@ def test(request):
 
     return None
 
-def splash_view(request):
-    return render(request, 'splash.html')
+def splash(request):
+    return render(request, 'web/splash.html')
 
 def home(request):
     """홈 페이지"""

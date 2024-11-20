@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,10 +8,17 @@
     <link rel="stylesheet" href="{% static 'css/splash.css' %}">
 </head>
 <body>
-    <div class="splash-container">
-        <h1>환영합니다!</h1>
-        <p>이곳은 스플래시 페이지입니다.</p>
-        <a href="/app/" class="start-button">시작하기</a>
+    <div id="splash">
+        <!-- 첫 번째 사진 -->
+        <img id="splash-image-1" src="{% static 'svg/splash1.svg' %}" alt="background1">
+        
+        <!-- 두 번째 사진 -->
+        <img id="splash-image-2" src="{% static 'svg/splash2.svg' %}" alt="background2">
+        
+        <!-- 글자 & 로고 이미지 -->
+        <img id="splash-text" src="{% static 'svg/splash-text.svg' %}" alt="text">
+        <img id="splash-logo" src="{% static 'svg/splashlogo.svg' %}" alt="logo">
     </div>
+    <script src="{% static 'js/splash.js' %}"></script>
 </body>
 </html>
