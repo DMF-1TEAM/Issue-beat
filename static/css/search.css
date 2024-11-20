@@ -1,0 +1,232 @@
+/* 공통 스타일 */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: inter;
+    width: 100%;
+    height: 100%;
+}
+
+html, body {
+    height: 100%;
+    box-sizing: border-box; /* 모든 요소 크기 계산 포함 */
+}
+
+/* 첫 번째 섹션: "ooo 관련 이슈"와 한줄 요약 */
+.intro-section {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #FFFFFF 75%;
+    color: #1D1C1C;
+    padding: 1% 2%;
+    width: 100%;
+}
+
+.main-title {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.quick-summary {
+    font-size: 1rem;
+    max-width: 60%;
+}
+
+/* 두 번째 섹션: 차트 */
+.chart-section {
+    background-color: #111;
+    color: #ffffff;
+    padding: 2rem;
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.chart-header {
+    margin-bottom: 1rem;
+}
+
+.chart-title {
+    display: flex;
+    align-items: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+    gap: 0.5rem;
+}
+
+.chart-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.chart-summary {
+    font-size: 1rem;
+    color: #b2b2b2;
+}
+
+.chart-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    width: 100%;
+}
+
+.date-filters,
+.view-controls {
+    display: flex;
+    gap: 1rem;
+}
+
+.filter-label {
+    font-size: 0.9rem;
+    color: #d1d1d1;
+}
+
+.input-date,
+.input-select {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background-color: #222;
+    color: #fff;
+}
+
+.btn-primary {
+    padding: 0.5rem 1rem;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.chart-content {
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* 세 번째 섹션: 요약과 뉴스 목록 */
+.main-content {
+    padding: 2rem;
+    background-color: #DADADA;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 아이콘과 제목을 같은 줄에 배치 */
+.contents-title {
+    display: flex;
+    align-items: center; /* 수직 가운데 정렬 */
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 2rem;
+    gap: 0.5rem;
+}
+
+.contents-icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+}
+
+/* 요약과 뉴스 목록을 수평 배치 */
+.content-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    width: 100%;
+}
+
+/* 요약 섹션 */
+.summary-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.summary-title {
+    display: flex;
+    align-items: center; /* 아이콘과 텍스트를 수평으로 배치 */
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.summary-title .littleicon {
+    width: 18px;
+    height: 18px;
+    margin-left: 8px;
+}
+
+.summary-card {
+    padding: 0.5rem;
+    border-radius: 10px;
+    background-color: #1D1C1C;
+    color: #FFFFFF;
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    align-items: center;
+}
+
+.summary-card p {
+    margin-top: 0.5rem;
+    margin-left: 2%;
+}
+
+.summary-step {
+    width: 56px;
+    height: auto;
+    margin-left: 1.5%;
+}
+
+/* 뉴스 목록 섹션 */
+.news-section {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.news-title {
+    display: flex;
+    align-items: center; /* 아이콘과 텍스트를 수평으로 배치 */
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.news-title .littleicon {
+    width: 18px;
+    height: 18px;
+    margin-left: 8px;
+}
+
+.news-count {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.news-list-container{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+}
+
+.news-list-item {
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #333;
+    font-size: 1rem;
+    line-height: 1.5;
+}

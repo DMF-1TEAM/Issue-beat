@@ -71,7 +71,7 @@ def get_news_filter(query, group_by='1day', start_date=None, end_date=None, sele
 
     # 3. 기본 쿼리셋 생성 (검색어 필터링)
     queryset = News.objects.filter(
-        Q(title__icontains=query) | Q(content__icontains=query)
+        Q(keyword__icontains=query)
     )
 
     # 4. 선택된 날짜가 있는 경우 날짜 범위 계산

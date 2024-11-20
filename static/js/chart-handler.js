@@ -78,8 +78,8 @@ class IssuePulseChart {
                 datasets: [{
                     label: '기사 수',
                     data: [],
-                    borderColor: '#3B82F6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderColor: '#97FC39',
+                    backgroundColor: 'rgba(151, 252, 57, 0.1)',
                     borderWidth: 2,
                     tension: 0.4,
                     fill: true,

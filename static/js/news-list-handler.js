@@ -187,7 +187,7 @@ class NewsListHandler {
 
     updateNewsCount(count) {
         if (this.newsCountElement) {
-            this.newsCountElement.innerText = `총 ${count}개 뉴스`;
+            this.newsCountElement.innerText = `총 ${count}건의 기사가 있습니다.`;
         }
     }
 
@@ -208,27 +208,16 @@ class NewsListHandler {
     renderNewsList(newsList) {
         newsList.forEach((news, index) => {
             const newsItem = document.createElement('div');
-            newsItem.classList.add('bg-white', 'rounded-lg', 'shadow-sm', 'hover:shadow-md', 'transition-shadow', 'duration-200', 'p-4', 'mb-4');
+            newsItem.classList.add('news-list');
     
             newsItem.innerHTML = `
                 <div class="flex justify-between items-start">
-                    <h3 class="text-lg font-medium text-gray-900 mb-2 flex-grow">${news.title}</h3>
-                    <span class="text-sm text-gray-500 ml-4 whitespace-nowrap">
-                        ${news.date} 
-                    </span>
+                    <h3 class="news-title">${news.title}</h3>
+                    <span class="news-date">${news.date}</span>
                 </div>
-                <div class="flex items-center justify-between text-sm">
-                    <div class="flex items-center space-x-4">
-                        <span class="text-gray-600">${news.press}</span>
-                    </div>
-                    <a href="${news.link}" target="_blank" 
-                       class="text-blue-600 hover:text-blue-800 flex items-center">
-                        원문 보기
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                    </a>
+                <div class="news-details">
+                    <div class="news-press">${news.press}</div>
+                    <a href="${news.link}" target="_blank" class="news-link"></a>
                 </div>
             `;
     
@@ -257,7 +246,7 @@ class NewsListHandler {
             }
         });
     }
-    
+
     showPopup(data) {
         const popup = document.createElement('div');
         popup.className = 'popup';

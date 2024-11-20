@@ -42,8 +42,8 @@ body, html {
 /* 글자 및 로고 스타일 */
 #splash-text {
     position: absolute;
-    width: 10rem;
-    top: 40%;
+    width: 20rem;
+    top: 35%;
     left: 35%;
     opacity: 0;
     transition: opacity 1s ease-in-out;
