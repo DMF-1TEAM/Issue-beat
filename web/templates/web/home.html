@@ -8,14 +8,20 @@
     <link rel="stylesheet" href="{% static 'css/home.css' %}">
 </head>
 <body>
-    <!-- 로고 -->
-    <main class="logo-container">
+    <div id="splash">
+        <!-- 배경 이미지 유지 -->
+        <img id="splash-image-2" src="{% static 'svg/splash2.svg' %}" alt="background2">
+    </div>
+
+    <!-- 로고 섹션 -->
+    <div class="logo-container">
         <section class="logo-section">
             <img src="{% static 'svg/logo.svg' %}" alt="logo">
         </section>
+    </div>
 
-    <!-- 검색 폼 -->
-    <main class="search-container">
+    <!-- 검색 폼 섹션 -->
+    <div class="search-container">
         <form id="search-form" action="{% url 'web:search' %}" method="GET" class="search-form">
             <div class="search-wrapper">
                 <input type="text" 
@@ -28,9 +34,10 @@
                 </button>
             </div>
         </form>
+    </div>
 
-    <main class="trending-container">
-        <!-- 실시간 인기 검색어 -->
+    <!-- 실시간 인기 검색어 섹션 -->
+    <div class="trending-container">
         <div class="trending-section">
             <h2 class="trending-title">가장 많이 검색됐어요!</h2>
             <div id="trending-keywords" class="trending-keywords">
@@ -43,6 +50,7 @@
                 {% endfor %}
             </div>
         </div>
-    </main>
+    </div>
+
 </body>
 </html>
