@@ -103,3 +103,15 @@ class DailySummary(models.Model):
     def __str__(self):
         query_str = self.query if self.query else 'All'
         return f"{self.date} - {query_str} ({self.group_by})"
+    
+class QuickSummary(models.Model):
+    """검색 키워드에 대한 간단 요약 모델"""
+    keyword = models.CharField(max_length=200, unique=True)
+    summary = models.CharField(max_length=100)
+    news_count = models.IntegerField(default=0)  # 요약 생성에 사용된 뉴스 수
+    date_range = models.CharField(max_length=50)  # 뉴스 기간 (예: "2022-01-01~2024-03-01")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.keyword}: {self.summary}"

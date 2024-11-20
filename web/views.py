@@ -8,15 +8,9 @@ from django.db.models import Q, Count
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 from datetime import datetime, timedelta
 from django.core.paginator import Paginator
-from .models import News, SearchHistory, NewsSummary, DailySummary
+from .models import News, SearchHistory, NewsSummary, DailySummary, QuickSummary
 from .services.llm_service import LLMService
 from .services.daily_issue_service import DailyIssueService
-
-def test(request):
-    news = News.objects.all()
-    print(news)
-
-    return None
 
 def splash(request):
     return render(request, 'web/splash.html')
@@ -410,3 +404,82 @@ def news_detail_api(request, news_id):
     
     except News.DoesNotExist:
         return JsonResponse({'error': '뉴스를 찾을 수 없습니다.'}, status=404)
+    
+@api_view(['GET'])
+def get_quick_summary_api(request):
+    """이슈의 전체적인 맥락을 한 문장으로 요약해주는 API"""
+    try:
+        query = request.GET.get('query', '').strip()
+
+        # 캐시된 요약 확인
+        cached_summary = QuickSummary.objects.filter(keyword=query).first()
+        if cached_summary:
+            # 캐시된 요약이 있다면 바로 반환
+            return Response({
+                'summary': cached_summary.summary,
+                'news_count': cached_summary.news_count,
+                'date_range': cached_summary.date_range,
+                'cached': True
+            })
+
+        # 전체 기간의 뉴스 데이터 조회
+        news_list = get_news_filter(query=query)
+        
+        if not news_list.exists():
+            return Response({
+                'summary': '관련 뉴스가 없습니다.',
+                'news_count': 0,
+                'date_range': '',
+                'is_empty': True
+            })
+
+        # 날짜 범위 계산
+        first_news = news_list.order_by('date').first()
+        last_news = news_list.order_by('-date').first()
+        date_range = f"{first_news.date.strftime('%Y-%m-%d')}~{last_news.date.strftime('%Y-%m-%d')}"
+
+        # 대표 뉴스 선택 (시작, 중간, 최근)
+        total_news = news_list.count()
+        middle_index = total_news // 2
+        
+        sample_indices = [0, 1, 2, 3, middle_index, middle_index+1, middle_index+2, -3, -2, -1]
+        sample_news = []
+        for idx in sample_indices:
+            if idx == -1:
+                news = news_list.order_by('-date').first()
+            else:
+                news = news_list.order_by('date')[idx]
+            if news and news not in sample_news:
+                sample_news.append(news)
+
+        # LLM 서비스로 요약 생성
+        llm_service = LLMService()
+        news_data = [{
+            'title': news.title,
+            'content': news.content[:300],  # 내용 일부만 사용
+            'date': news.date.strftime('%Y-%m-%d')
+        } for news in sample_news]
+
+        result = llm_service.generate_quick_summary(news_data, query)
+
+        # 요약 결과 저장
+        QuickSummary.objects.create(
+            keyword=query,
+            summary=result['summary'],
+            news_count=total_news,
+            date_range=date_range
+        )
+
+        return Response({
+            'summary': result['summary'],
+            'news_count': total_news,
+            'date_range': date_range,
+            'cached': False
+        })
+
+    except Exception as e:
+        print(f"Quick summary 생성 오류: {e}")
+        return Response(
+            {'error': '요약을 생성하는데 실패했습니다.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
