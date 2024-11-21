@@ -11,27 +11,33 @@
 </head>
 <body>
     <!-- 상단 네비게이션 -->
-    <header class="bg-black z-50 flex items-center h-12">
-        <div class="w-full flex justify-between items-center px-6">
-            <a href="{% url 'web:home' %}" class="flex items-center">
-                <img src="{% static '../static/svg/logo.svg' %}" alt="이슈박동 로고" class="mr-2" style="width: 85px; height: 32px;">
+    <header class="bg-black z-50 flex items-center h-11">
+        <div class="w-full flex items-center px-6">
+            <a href="{% url 'web:home' %}" class="flex items-center ml-4"> <!-- ml-4 추가 -->
+                <img src="{% static '../static/svg/logo.svg' %}" alt="이슈박동 로고" class="mr-2" style="width: 70px; height: 26px;">
             </a>
+
+            <!-- 가운데 빈 공간 -->
+            <div class="flex-grow"></div>
+
             {% if request.path != '/' %}
-            <div class="relative w-1/2">
-                <form action="{% url 'web:search' %}" method="GET">
-                    <input type="text" 
-                            name="query"
-                            value="{{ query }}"
-                            class="w-1/2 px-4 py-2 rounded-full bg-gray-800 text-white border border-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            placeholder="이슈를 검색해보세요...">
-                    <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="relative mr-20"> <!-- mr-20은 오른쪽 끝에서 얼마나 떨어져 있을지를 조절 -->
+                <form action="{% url 'web:search' %}" method="GET" class="relative">
+                    <input type="text"
+                        name="query"
+                        value="{{ query }}"
+                        class="w-[400px] pr-10 py-1 text-sm rounded-full bg-transparent text-white border border-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="검색어를 입력하세요"
+                        style="text-indent: 16px;"
+                    >
+                    <button type="submit" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M16.5 10.5a6 6 0 11-12 0 6 6 0 0112 0z" />
                         </svg>
                     </button>
                 </form>
             </div>
-            {% endif %}
+             {% endif %}
         </div>
     </header>
     {% block content %}    
@@ -113,10 +119,11 @@
                     관련 뉴스 목록
                     <img src="{% static 'svg/list-icon.svg' %}" alt="icon" class="littleicon">
                 </h3>
-                <div id="news-count" class="news-count">
-                    총 <span id="news-count">0</span>건의 기사가 있습니다.
+            <div class="news-list-cont">
+                <div id="count" class="news-count">
+                    <span id="news-date"></span> 총 <span id="count" class="bold">0</span>건의 기사가 있습니다.
                 </div>
-                <div id="news-list" class="news-list"></div>
+                <div id="news-list" class="news-list" style="height: 500px; overflow-y: auto;"></div>
             </div>
         </div>
     </section>

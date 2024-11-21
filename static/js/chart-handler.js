@@ -236,7 +236,7 @@ class IssuePulseChart {
         tooltipEl.innerHTML = `
             <div class="bg-white shadow-lg rounded-lg border border-gray-200 p-4">
                 <div class="flex justify-between items-center mb-2">
-                    <span class="font-bold">${data.date || ''}</span>
+                    <span class="font-bold text-black">${data.date || ''}</span>
                     <span class="text-blue-600">뉴스 ${data.news_count}건</span>
                 </div>
                 <div class="text-sm font-medium text-gray-900">
@@ -249,12 +249,12 @@ class IssuePulseChart {
         `;
         tooltipEl.style.opacity = '1';
     }
-
+    
     showTooltipLoading(tooltipEl, date) {
         tooltipEl.innerHTML = `
             <div class="bg-white shadow-lg rounded-lg border border-gray-200 p-4">
                 <div class="flex justify-between items-center mb-2">
-                    <span class="font-bold">${date}</span>
+                    <span class="font-bold text-black">${date}</span>
                     <span class="text-blue-600">로딩중...</span>
                 </div>
                 <div class="text-sm text-gray-500">
@@ -264,7 +264,7 @@ class IssuePulseChart {
         `;
         tooltipEl.style.opacity = '1';
     }
-
+    
     showTooltipError(tooltipEl) {
         tooltipEl.innerHTML = `
             <div class="bg-white shadow-lg rounded-lg border border-gray-200 p-4">
