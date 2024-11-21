@@ -5,120 +5,58 @@ class SummaryHandler {
             mainContent: document.getElementById('summary-level-2'),
             currentStatus: document.getElementById('summary-level-3')
         };
-        
-        this.summaryIcons = {
-            background: `
-                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-            `,
-            mainContent: `
-                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                          d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                </svg>
-            `,
-            currentStatus: `
-                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-            `
-        };
 
-        // 상태 관리를 위한 속성들
-        this.query = new URLSearchParams(window.location.search).get('query') || '';
-        this.date = new URLSearchParams(window.location.search).get('date') || null;
-        this.startDate = new URLSearchParams(window.location.search).get('startDate') || null;
-        this.endDate = new URLSearchParams(window.location.search).get('endDate') || null;
-        this.groupBy = new URLSearchParams(window.location.search).get('group_by') || '1day';
+        // 상태 초기화
+        const urlParams = new URLSearchParams(window.location.search);
+        this.query = urlParams.get('query') || '';
+        this.date = urlParams.get('date') || null;
+        this.startDate = urlParams.get('startDate') || null;
+        this.endDate = urlParams.get('endDate') || null;
+        this.groupBy = urlParams.get('group_by') || '1day';
         
-
-        // 캐시 초기화
+        this.isLoading = false;
+        this.currentRequest = null;
         this.summaryCache = new Map();
+        this.initialLoadComplete = false;
 
-        // 현재 상태 객체 - 상태 비교를 위해 사용
-        this.currentState = {
-            query: this.query,
-            date: this.date,
-            startDate: this.startDate,
-            endDate: this.endDate,
-            groupBy: this.groupBy
-        };
-
-        // DOM 요소 확인
-        Object.entries(this.summaryContainers).forEach(([key, element]) => {
-            if (!element) {
-                console.error(`${key} 컨테이너를 찾을 수 없습니다.`);
-            }
-        });
-
-        // 이벤트 리스너 등록
         this.setupEventListeners();
-
-        // 초기 데이터가 있으면 로드
-        if (this.query) {
+        
+        // 초기 로드는 requestAnimationFrame으로 지연
+        if (this.query && Object.values(this.summaryContainers).every(el => el)) {
             this.loadInitialSummary();
         }
     }
 
     setupEventListeners() {
-        document.addEventListener('chartDateClick', this.handleChartDateClick.bind(this));
-        window.addEventListener('popstate', this.handlePopState.bind(this));
-    }
+        this.boundHandleChartDateClick = this.handleChartDateClick.bind(this);
+        this.boundHandlePopState = this.handlePopState.bind(this);
 
+        document.removeEventListener('chartDateClick', this.boundHandleChartDateClick);
+        window.removeEventListener('popstate', this.boundHandlePopState);
+        
+        document.addEventListener('chartDateClick', this.boundHandleChartDateClick);
+        window.addEventListener('popstate', this.boundHandlePopState);
+    }
 
     async loadInitialSummary() {
+        if (this.isLoading || this.initialLoadComplete) return;
+        
         try {
-            await this.updateSummary(this.currentState.query, this.currentState.date);
+            this.initialLoadComplete = true;
+            await this.fetchAndUpdateSummary();
         } catch (error) {
             console.error('초기 요약 로드 오류:', error);
+            this.showError('요약을 불러오는데 실패했습니다.');
         }
     }
 
-    async handleChartDateClick(e) {
+    handleChartDateClick(e) {
         const { date, query, groupBy, startDate, endDate } = e.detail;
-        
-        // 상태가 변경되었는지 확인
-        if (this.isStateUnchanged(date, query, groupBy, startDate, endDate)) {
-            return;
-        }
-        
-        // 상태 업데이트
+        this.initialLoadComplete = false; // 차트 클릭 시 초기화
         this.updateState(date, query, groupBy, startDate, endDate);
-        
-        const cacheKey = this.getCacheKey();
-        if (this.summaryCache.has(cacheKey)) {
-            this.displaySummary(this.summaryCache.get(cacheKey));
-        } else {
-            await this.fetchAndUpdateSummary();
-        }
+        this.fetchAndUpdateSummary();
     }
 
-    isStateUnchanged(date, query, groupBy, startDate, endDate) {
-        return this.currentState.date === date &&
-               this.currentState.query === query &&
-               this.currentState.groupBy === groupBy &&
-               this.currentState.startDate === startDate &&
-               this.currentState.endDate === endDate;
-    }
-
-    updateState(date, query, groupBy, startDate, endDate) {
-        this.date = date;
-        this.query = query;
-        this.groupBy = groupBy;
-        this.startDate = startDate;
-        this.endDate = endDate;
-
-        this.currentState = {
-            date: this.date,
-            query: this.query,
-            groupBy: this.groupBy,
-            startDate: this.startDate,
-            endDate: this.endDate
-        };
-    }
 
     handlePopState(e) {
         const searchParams = new URLSearchParams(window.location.search);
@@ -154,67 +92,94 @@ class SummaryHandler {
         }
     }
 
+    isStateUnchanged(date, query, groupBy, startDate, endDate) {
+        return this.currentState.date === date &&
+               this.currentState.query === query &&
+               this.currentState.groupBy === groupBy &&
+               this.currentState.startDate === startDate &&
+               this.currentState.endDate === endDate;
+    }
+
+    updateState(date, query, groupBy, startDate, endDate) {
+        this.date = date;
+        this.query = query;
+        this.groupBy = groupBy;
+        this.startDate = startDate;
+        this.endDate = endDate;
+
+        this.currentState = {
+            date: this.date,
+            query: this.query,
+            groupBy: this.groupBy,
+            startDate: this.startDate,
+            endDate: this.endDate
+        };
+    }
+
     getCacheKey() {
         return `${this.query}-${this.date || 'overall'}-${this.startDate}-${this.endDate}-${this.groupBy}`;
     }
 
-    async loadInitialSummary() {
-        try {
-            await this.fetchAndUpdateSummary();
-        } catch (error) {
-            console.error('초기 요약 로드 오류:', error);
-            this.showError('요약을 불러오는데 실패했습니다.');
-        }
-    }
-
     async fetchAndUpdateSummary() {
-        if (!this.query) return;
+        if (!this.query || this.isLoading) return;
+        
+        const requestKey = this.getCacheKey();
+        if (requestKey === this.lastRequestKey) return;
+        
+        if (this.summaryCache.has(requestKey)) {
+            this.displaySummary(this.summaryCache.get(requestKey));
+            return;
+        }
+
+        this.isLoading = true;
+        this.lastRequestKey = requestKey;
         
         try {
-            this.showLoading('요약을 생성하고 있습니다...');
+            this.showLoading();
             
-            const url = new URL('/api/v2/news/summary/', window.location.origin);
-            const params = new URLSearchParams({
-                query: this.query,
-                group_by: this.groupBy
-            });
-
-            if (this.startDate && this.endDate) {
-                params.append('start_date', this.startDate);
-                params.append('end_date', this.endDate);
-            } else if (this.date) {
-                params.append('date', this.date);
+            if (this.currentRequest) {
+                this.currentRequest.abort();
             }
 
-            url.search = params.toString();
-
-            const summary = await this.fetchSummaryWithRetry(url);
+            this.currentRequest = new AbortController();
+            
+            const summary = await this.fetchSummaryWithRetry(
+                this.buildSummaryUrl(),
+                this.currentRequest.signal
+            );
             
             if (summary) {
-                const cacheKey = this.getCacheKey();
-                this.summaryCache.set(cacheKey, summary);
+                this.summaryCache.set(requestKey, summary);
                 this.displaySummary(summary);
-            } else {
-                this.showError('요약 생성에 실패했습니다. 잠시 후 다시 시도해주세요.');
             }
         } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('이전 요청이 취소되었습니다.');
+                return;
+            }
             console.error('요약 업데이트 오류:', error);
             this.showError('요약을 불러오는데 실패했습니다.');
+        } finally {
+            this.isLoading = false;
+            this.currentRequest = null;
         }
     }
 
-    async fetchSummaryWithRetry(url, maxRetries = 3) {
+    async fetchSummaryWithRetry(url, signal, maxRetries = 3) {
         let retryCount = 0;
         
         while (retryCount < maxRetries) {
             try {
-                const response = await fetch(url);
+                const response = await fetch(url, { signal });
                 const data = await response.json();
 
                 if (response.ok && !data.is_error) {
                     return data;
                 }
             } catch (error) {
+                if (error.name === 'AbortError') {
+                    throw error;
+                }
                 console.error(`Retry ${retryCount + 1} failed:`, error);
             }
 
@@ -228,82 +193,121 @@ class SummaryHandler {
         return null;
     }
 
+    buildSummaryUrl() {
+        const url = new URL('/api/v2/news/summary/', window.location.origin);
+        const params = new URLSearchParams({
+            query: this.query,
+            group_by: this.groupBy
+        });
+
+        if (this.date) params.append('date', this.date);
+        if (this.startDate) params.append('start_date', this.startDate);
+        if (this.endDate) params.append('end_date', this.endDate);
+
+        url.search = params.toString();
+        return url;
+    }
+
     displaySummary(summaryData) {
         if (!summaryData) {
             console.error('요약 데이터가 없습니다.');
             return;
         }
 
-        // 배경 정보 표시
-        this.summaryContainers.background.innerHTML = `
-            <div class="space-y-4">
-                <div class="flex items-center space-x-2">
-                    ${this.summaryIcons.background}
-                    <h3 class="text-lg font-medium text-gray-900">배경</h3>
-                </div>
-                <div class="text-gray-600 leading-relaxed">
-                    ${this.formatSummaryText(summaryData.background)}
-                </div>
-            </div>
-        `;
+        setTimeout(() => {
+            this.summaryContainers.background.innerHTML = 
+                this.formatSummaryText(summaryData.background);
+        }, 0);
+        
+        setTimeout(() => {
+            this.summaryContainers.mainContent.innerHTML = 
+                this.formatSummaryText(summaryData.core_content);
+        }, 100);
+        
+        setTimeout(() => {
+            this.summaryContainers.currentStatus.innerHTML = 
+                this.formatSummaryText(summaryData.conclusion);
+        }, 200);
 
-        // 핵심 내용 표시
-        this.summaryContainers.mainContent.innerHTML = `
-            <div class="space-y-4">
-                <div class="flex items-center space-x-2">
-                    ${this.summaryIcons.mainContent}
-                    <h3 class="text-lg font-medium text-gray-900">핵심 내용</h3>
-                </div>
-                <div class="text-gray-600 leading-relaxed">
-                    ${this.formatSummaryText(summaryData.core_content)}
-                </div>
-            </div>
-        `;
-
-        // 결론 표시
-        this.summaryContainers.currentStatus.innerHTML = `
-            <div class="space-y-4">
-                <div class="flex items-center space-x-2">
-                    ${this.summaryIcons.currentStatus}
-                    <h3 class="text-lg font-medium text-gray-900">결론</h3>
-                </div>
-                <div class="text-gray-600 leading-relaxed">
-                    ${this.formatSummaryText(summaryData.conclusion)}
-                </div>
-            </div>
-        `;
+        this.updateURL();
     }
 
     formatSummaryText(text) {
-        return text.replace(/\n/g, '<br>');
+        if (!text) return '';
+        
+        return text
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/_(.*?)_/g, '<em>$1</em>')
+            .trim();
     }
 
-    showLoading() {
+    updateURL() {
+        const searchParams = new URLSearchParams(window.location.search);
+        
+        if (this.date) searchParams.set('date', this.date);
+        else searchParams.delete('date');
+        
+        if (this.startDate) searchParams.set('startDate', this.startDate);
+        else searchParams.delete('startDate');
+        
+        if (this.endDate) searchParams.set('endDate', this.endDate);
+        else searchParams.delete('endDate');
+        
+        searchParams.set('group_by', this.groupBy);
+        searchParams.set('query', this.query);
+
+        const newURL = `${window.location.pathname}?${searchParams.toString()}`;
+        window.history.pushState({ path: newURL }, '', newURL);
+    }
+
+    showLoading(message = '요약을 생성하고 있습니다...') {
+        const loadingHTML = `
+            <div class="flex justify-center items-center py-8">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mr-3"></div>
+                <span>${message}</span>
+            </div>
+        `;
+        
         Object.values(this.summaryContainers).forEach(container => {
-            container.innerHTML = `
-                <div class="flex justify-center items-center py-8">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                </div>
-            `;
+            if (container) container.innerHTML = loadingHTML;
         });
     }
     
     showError(message) {
+        const errorHTML = `
+            <div class="text-red-500 text-center py-4">
+                ${message}
+                <button 
+                    class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    onclick="window.summaryHandler.retryLastUpdate()"
+                >
+                    다시 시도
+                </button>
+            </div>
+        `;
+        
         Object.values(this.summaryContainers).forEach(container => {
-            container.innerHTML = `
-                <div class="text-red-500 text-center py-4">${message}</div>
-            `;
+            if (container) container.innerHTML = errorHTML;
         });
     }
 
     retryLastUpdate() {
-        if (this.currentState.query) {
-            this.updateSummary(this.currentState.query, this.currentState.date);
-        }
+        this.fetchAndUpdateSummary();
     }
 }
 
-// DOM이 로드된 후 초기화
+// Chart.js와의 통합
 document.addEventListener('DOMContentLoaded', () => {
-    window.summaryHandler = new SummaryHandler();
+    const initializeHandlers = () => {
+        if (!window.summaryHandler) {
+            window.summaryHandler = new SummaryHandler();
+        }
+        if (!window.issuePulseChart) {
+            window.issuePulseChart = new IssuePulseChart();
+        }
+    };
+
+    // 지연 초기화
+    setTimeout(initializeHandlers, 0);
 });

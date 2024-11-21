@@ -13,6 +13,9 @@ from .services.llm_service import LLMService
 from .services.daily_issue_service import DailyIssueService
 
 
+def splash(request):
+    return render(request, 'web/splash.html')
+
 def home(request):
     """홈 페이지"""
     try:
@@ -69,7 +72,7 @@ def get_news_filter(query, group_by='1day', start_date=None, end_date=None, sele
 
     # 3. 기본 쿼리셋 생성 (검색어 필터링)
     queryset = News.objects.filter(
-        Q(title__icontains=query) | Q(content__icontains=query)
+        Q(keyword__icontains=query)
     )
 
     # 4. 선택된 날짜가 있는 경우 날짜 범위 계산
@@ -244,21 +247,10 @@ def get_summary_api(request):
     """뉴스 요약 API"""
     try:
         query = request.GET.get('query', '').strip()
-        date = request.GET.get('date', '').strip()
+        date = request.GET.get('date', '').strip() or None
         group_by = request.GET.get('group_by', '1day').strip()
         start_date = request.GET.get('start_date', '').strip() or None
         end_date = request.GET.get('end_date', '').strip() or None
-
-        # date가 빈 문자열이면 None으로 설정
-        date = date or None
-        
-        news_list = get_news_filter(
-            query=query,
-            selected_date=date if not (start_date and end_date) else None,
-            start_date=start_date,
-            end_date=end_date,
-            group_by=group_by
-        )
 
         if date:
             try:
@@ -279,14 +271,12 @@ def get_summary_api(request):
                 except ValueError:
                     period_start = None
 
-        # 캐시된 요약 확인
-        saved_summary = None
-        if period_start:
-            saved_summary = NewsSummary.objects.filter(
-                keyword=query,
-                date=period_start,
-                group_by=group_by
-            ).first()
+        cache_key = f"{query}_{period_start}_{group_by}"
+        saved_summary = NewsSummary.objects.filter(
+            keyword=query,
+            date=period_start,
+            group_by=group_by
+        ).first()
 
         if saved_summary:
             return Response({
@@ -296,16 +286,26 @@ def get_summary_api(request):
                 'cached': True
             })
 
-        # 최대 50개의 뉴스로 제한하여 요약 생성
-        news_data = [{'title': news.title, 'content': news.content} for news in news_list[::5]]
+        news_list = get_news_filter(
+            query=query,
+            selected_date=date if not (start_date and end_date) else None,
+            start_date=start_date,
+            end_date=end_date,
+            group_by=group_by
+        )
 
-        if not news_data:
+        if not news_list.exists():
             return Response({
                 'background': '검색된 뉴스가 없습니다.',
                 'core_content': '검색된 뉴스가 없습니다.',
                 'conclusion': '검색된 뉴스가 없습니다.',
                 'is_empty': True
             })
+
+        news_data = [{
+            'title': news.title,
+            'content': news.content[:10000]
+        } for news in news_list[:10000:2]]
 
         llm_service = LLMService()
         summary = llm_service.generate_structured_summary(
@@ -314,8 +314,7 @@ def get_summary_api(request):
             is_overall=not bool(date)
         )
 
-        # 요약 결과 캐시 저장
-        if period_start:
+        if period_start and not saved_summary:
             NewsSummary.objects.create(
                 keyword=query,
                 date=period_start,
@@ -412,7 +411,6 @@ def get_quick_summary_api(request):
         # 캐시된 요약 확인
         cached_summary = QuickSummary.objects.filter(keyword=query).first()
         if cached_summary:
-            # 캐시된 요약이 있다면 바로 반환
             return Response({
                 'summary': cached_summary.summary,
                 'news_count': cached_summary.news_count,
@@ -421,9 +419,9 @@ def get_quick_summary_api(request):
             })
 
         # 전체 기간의 뉴스 데이터 조회
-        news_list = get_news_filter(query=query)
+        news_list = list(get_news_filter(query=query))  # QuerySet을 list로 변환
         
-        if not news_list.exists():
+        if not news_list:
             return Response({
                 'summary': '관련 뉴스가 없습니다.',
                 'news_count': 0,
@@ -432,29 +430,25 @@ def get_quick_summary_api(request):
             })
 
         # 날짜 범위 계산
-        first_news = news_list.order_by('date').first()
-        last_news = news_list.order_by('-date').first()
+        sorted_news = sorted(news_list, key=lambda x: x.date)
+        first_news = sorted_news[0]
+        last_news = sorted_news[-1]
         date_range = f"{first_news.date.strftime('%Y-%m-%d')}~{last_news.date.strftime('%Y-%m-%d')}"
 
         # 대표 뉴스 선택 (시작, 중간, 최근)
-        total_news = news_list.count()
-        middle_index = total_news // 2
-        
-        sample_indices = [0, 1, 2, 3, middle_index, middle_index+1, middle_index+2, -3, -2, -1]
-        sample_news = []
-        for idx in sample_indices:
-            if idx == -1:
-                news = news_list.order_by('-date').first()
-            else:
-                news = news_list.order_by('date')[idx]
-            if news and news not in sample_news:
-                sample_news.append(news)
+        total_news = len(news_list)
+        if total_news <= 5:
+            sample_news = news_list
+        else:
+            middle_index = total_news // 2
+            indices = [0, middle_index, total_news-1]  # 시작, 중간, 끝 인덱스
+            sample_news = [sorted_news[i] for i in indices]
 
         # LLM 서비스로 요약 생성
         llm_service = LLMService()
         news_data = [{
             'title': news.title,
-            'content': news.content[:300],  # 내용 일부만 사용
+            'content': news.content[:300],  # 내용 길이 제한
             'date': news.date.strftime('%Y-%m-%d')
         } for news in sample_news]
 

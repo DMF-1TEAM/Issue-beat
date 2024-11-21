@@ -1,0 +1,58 @@
+/* 전체 화면 설정 */
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000; /* 배경색 */
+}
+
+/* 스플래시 컨테이너 */
+#splash {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: black;
+    overflow: hidden;
+}
+
+
+/* 이미지 스타일 */
+#splash-image-1, #splash-image-2 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+/* 첫 번째 사진 기본 상태 */
+#splash-image-1 {
+    opacity: 1;
+    z-index: 1;
+}
+
+/* 글자 및 로고 스타일 */
+#splash-text {
+    position: absolute;
+    width: 20rem;
+    top: 35%;
+    left: 33%;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+#splash-logo {
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 1s ease-in-out 0.5s;
+}

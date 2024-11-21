@@ -4,6 +4,7 @@ class IssuePulseChart {
         this.chart = null;
         this.searchQuery = new URLSearchParams(window.location.search).get('query') || '';
         this.groupBy = new URLSearchParams(window.location.search).get('group_by') || '1day';
+        
 
         // 날짜 범위 초기화
         const today = new Date();
@@ -36,15 +37,13 @@ class IssuePulseChart {
         // 날짜 범위 이벤트
         const startDateInput = document.getElementById("start_date");
         const endDateInput = document.getElementById("end_date");
-        const applyButton = document.getElementById("applyDateRange");
         
-        if (startDateInput && endDateInput && applyButton) {
+        if (startDateInput && endDateInput) {
             startDateInput.value = this.startDate;
             endDateInput.value = this.endDate;
 
             startDateInput.addEventListener("change", this.handleStartDateChange.bind(this));
             endDateInput.addEventListener("change", this.handleEndDateChange.bind(this));
-            applyButton.addEventListener("click", this.handleDateRangeApply.bind(this));
         }
 
          // 초기화 버튼 이벤트 리스너 추가
@@ -78,8 +77,8 @@ class IssuePulseChart {
                 datasets: [{
                     label: '기사 수',
                     data: [],
-                    borderColor: '#3B82F6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderColor: '#97FC39',
+                    backgroundColor: 'rgba(151, 252, 57, 0.1)',
                     borderWidth: 2,
                     tension: 0.4,
                     fill: true,
@@ -236,7 +235,7 @@ class IssuePulseChart {
         tooltipEl.innerHTML = `
             <div class="bg-white shadow-lg rounded-lg border border-gray-200 p-4">
                 <div class="flex justify-between items-center mb-2">
-                    <span class="font-bold">${data.date || ''}</span>
+                    <span class="font-bold text-black">${data.date || ''}</span>
                     <span class="text-blue-600">뉴스 ${data.news_count}건</span>
                 </div>
                 <div class="text-sm font-medium text-gray-900">
@@ -249,12 +248,12 @@ class IssuePulseChart {
         `;
         tooltipEl.style.opacity = '1';
     }
-
+    
     showTooltipLoading(tooltipEl, date) {
         tooltipEl.innerHTML = `
             <div class="bg-white shadow-lg rounded-lg border border-gray-200 p-4">
                 <div class="flex justify-between items-center mb-2">
-                    <span class="font-bold">${date}</span>
+                    <span class="font-bold text-black">${date}</span>
                     <span class="text-blue-600">로딩중...</span>
                 </div>
                 <div class="text-sm text-gray-500">
@@ -264,7 +263,7 @@ class IssuePulseChart {
         `;
         tooltipEl.style.opacity = '1';
     }
-
+    
     showTooltipError(tooltipEl) {
         tooltipEl.innerHTML = `
             <div class="bg-white shadow-lg rounded-lg border border-gray-200 p-4">
@@ -307,7 +306,6 @@ class IssuePulseChart {
     }
 
     async fetchDataAndUpdateChart() {
-        console.log('start============')
         if (!this.searchQuery) return;
 
         try {
@@ -362,7 +360,7 @@ class IssuePulseChart {
         this.updateURL({ group_by: this.groupBy });
         
         // 차트 데이터 업데이트
-        // this.fetchDataAndUpdateChart();
+        this.fetchDataAndUpdateChart();
 
         // 뉴스 리스트 업데이트
         if (window.newsListHandler) {
@@ -384,6 +382,13 @@ class IssuePulseChart {
         }
         
         this.startDate = newStartDate;
+        this.tooltipCache.clear();
+
+        // 날짜 변경 시 자동 적용
+        this.updateURL({
+            start_date: this.startDate,
+        });
+        this.fetchDataAndUpdateChart();
     }
 
     handleEndDateChange(event) {
@@ -397,6 +402,13 @@ class IssuePulseChart {
         }
         
         this.endDate = newEndDate;
+        this.tooltipCache.clear();
+
+        // 날짜 변경 시 자동 적용
+        this.updateURL({
+            end_date: this.endDate,
+        });
+        this.fetchDataAndUpdateChart();
     }
 
     handleDateRangeApply() {

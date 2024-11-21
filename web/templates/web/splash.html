@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이.슈.박.동.</title>
+    <link rel="stylesheet" href="{% static 'css/splash.css' %}">
+</head>
+<body>
+    <div id="splash">
+        <!-- 첫 번째 사진 -->
+        <img id="splash-image-1" src="{% static 'svg/splash1.svg' %}" alt="background1">
+        
+        <!-- 두 번째 사진 -->
+        <img id="splash-image-2" src="{% static 'svg/splash2.svg' %}" alt="background2">
+        
+        <!-- 글자 & 로고 이미지 -->
+        <img id="splash-text" src="{% static 'svg/splash-text.svg' %}" alt="text">
+        <img id="splash-logo" src="{% static 'svg/splashlogo.svg' %}" alt="logo">
+    </div>
+    <script src="{% static 'js/splash.js' %}"></script>
+</body>
+</html>

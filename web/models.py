@@ -13,10 +13,7 @@ class News(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['date', 'press']),
-            models.Index(fields=['date', '-press']),
-            # models.Index(fields=['keyword']),
-            # models.Index(fields=['date', 'keyword']),
+            models.Index(fields=['date']),
         ]
         
     @classmethod
@@ -36,6 +33,18 @@ class News(models.Model):
 
     def __str__(self):
         return f"[{self.press}] {self.title}"
+    
+class Keyword(models.Model):
+    name = models.CharField(max_length=100)
+    news = models.ManyToManyField(News, related_name='keywords')
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['name']),
+        ]
+
+    def __str__(self):
+        return f"{self.keyword} ({self.count})"
 
 class SearchHistory(models.Model):
     keyword = models.CharField(max_length=100)
@@ -115,3 +124,4 @@ class QuickSummary(models.Model):
 
     def __str__(self):
         return f"{self.keyword}: {self.summary}"
+    

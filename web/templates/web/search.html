@@ -1,260 +1,170 @@
-{% extends "web/base.html" %} 
-{% load static %} 
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이슈박동</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/search.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- 상단 네비게이션 -->
+    <header class="bg-black z-50 flex items-center h-14">
+        <div class="w-full flex items-center justify-between px-36">
+            <a href="{% url 'web:home' %}" class="flex items-center"> <!-- ml-4 추가 -->
+                <img src="{% static '../static/svg/logo.svg' %}" alt="이슈박동 로고" class="mr-2" style="width: 70px; height: 40px;">
+            </a>
 
-{% block content %}
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="main">
-    <!-- 차트 섹션 -->
-    <section class="mb-8">
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <!-- 이슈 헤더 섹션 -->
-            <div class="flex items-start space-x-8 mb-8 pb-4 border-b border-gray-200">
-                <h2 class="text-2xl font-bold text-gray-900 flex items-center space-x-2">
-                    '<span id="quick-summary-keyword"></span>' 관련 이슈
-                </h2>
-                <p id="quick-summary-content" class="text-base text-gray-600 flex-1">
-                    <!-- 요약 내용이 여기에 들어갑니다 -->
-                </p>
-            </div>
-            <!-- 필터 컨테이너 -->
-            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
-                <!-- 날짜 범위 필터 -->
-                <div class="flex flex-wrap items-center gap-4">
-                    <div class="flex items-center space-x-2">
-                        <label for="start_date" class="text-sm font-medium text-gray-700">시작일</label>
-                        <input type="date" 
-                               id="start_date"
-                               name="start_date" 
-                               class="p-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <label for="end_date" class="text-sm font-medium text-gray-700">종료일</label>
-                        <input type="date" 
-                               id="end_date"
-                               name="end_date" 
-                               class="p-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-                    <button id="applyDateRange" 
-                            class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors">
-                        적용
-                    </button>
-                </div>
-
-                <!-- 기간 단위 선택 -->
-                <div class="flex items-center space-x-4">
-                    <div class="flex items-center space-x-2">
-                        <label for="date_filter" class="text-sm font-medium text-gray-700">단위</label>
-                        <select id="date_filter" 
-                                class="p-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="1day" {% if group_by == "1day" %}selected{% endif %}>일간</option>
-                            <option value="1week" {% if group_by == "1week" %}selected{% endif %}>주간</option>
-                            <option value="1month" {% if group_by == "1month" %}selected{% endif %}>월간</option>
-                        </select>
-                    </div>
-                    
-                    <button id="resetView" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            {% if request.path != '/' %}
+            <div class="relative mr-20"> 
+                <form action="{% url 'web:search' %}" method="GET" class="relative">
+                    <input type="text"
+                        name="query"
+                        value="{{ query }}"
+                        class="w-[400px] pr-10 py-1 text-sm rounded-full bg-transparent text-white border border-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="검색어를 입력하세요"
+                        style="text-indent: 16px;"
+                    >
+                    <button type="submit" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M16.5 10.5a6 6 0 11-12 0 6 6 0 0112 0z" />
                         </svg>
-                        전체 보기
                     </button>
+                </form>
+            </div>
+             {% endif %}
+        </div>
+    </header>
+    {% block content %}    
+    <!-- 첫 번째 섹션: "ooo 관련 이슈"와 한줄 요약 -->
+    <section class="intro-section">
+        <h1 class="main-title">'<span id="quick-summary-keyword"></span>' 관련 이슈</h1>
+        <p id="quick-summary-content" class="quick-summary"></p>
+    </section>
+    <!-- 두 번째 섹션: 차트 -->
+    <section class="chart-section">
+        <div class="chart-header">
+            <h2 class="chart-title">
+                <img src="{% static 'svg/chart-icon.svg' %}" alt="icon" class="chart-icon">
+                이슈 심박수
+            </h2>
+            <p id="quick-summary-content" class="chart-summary"></p>
+        </div>
+        <div class="chart-controls">
+            <div class="date-filters">
+                <div class="date-input">
+                    <label for="start_date" class="filter-label">시작일</label>
+                    <input type="date" id="start_date" name="start_date" class="input-date" />
+                </div>
+                <div class="date-input">
+                    <label for="end_date" class="filter-label">종료일</label>
+                    <input type="date" id="end_date" name="end_date" class="input-date" />
                 </div>
             </div>
-            <!-- 차트 컨테이너 -->
-            <div class="chart-container relative w-full" style="height: 400px;">
-                <canvas id="timeline-chart"></canvas>
+            <div class="view-controls">
+                <div class="unit-filter">
+                    <label for="date_filter" class="filter-label">단위</label>
+                    <select id="date_filter" class="input-select">
+                        <option value="1day" {% if group_by == "1day" %}selected{% endif %}>일간</option>
+                        <option value="1week" {% if group_by == "1week" %}selected{% endif %}>주간</option>
+                        <option value="1month" {% if group_by == "1month" %}selected{% endif %}>월간</option>
+                    </select>
+                </div>
+                <button id="resetView" class="btn-secondary">전체 보기</button>
+            </div>
+        </div>
+        <div class="chart-content">
+            <canvas id="timeline-chart"></canvas>
+        </div>
+    </section>
+    <!-- 세 번째 섹션: 요약과 뉴스 목록 -->
+    <section class="main-content">
+        <!-- 상단에 제목 배치 -->
+        <h2 class="contents-title">
+            <img src="{% static 'svg/contents-icon.svg' %}" alt="icon" class="contents-icon">
+            집중 탐색
+        </h2>
+        
+        <!-- 요약과 뉴스 목록을 수평 배치 -->
+        <div class="content-wrapper">
+            <!-- 요약 섹션 -->
+            <div class="summary-section">
+                <h3 class="summary-title">
+                    이슈의 흐름
+                    <img src="{% static 'svg/summary-icon.svg' %}" alt="icon" class="littleicon">
+                </h3>
+                <div class="summary-card">
+                    <img src="{% static 'svg/summary1.svg' %}" alt="summary-level-1" class="summary-step">
+                    <p id="summary-level-1"></p>
+                </div>
+                <div class="summary-card">
+                    <img src="{% static 'svg/summary2.svg' %}" alt="summary-level-2" class="summary-step">
+                    <p id="summary-level-2"></p>
+                </div>
+                <div class="summary-card">
+                    <img src="{% static 'svg/summary3.svg' %}" alt="summary-level-3" class="summary-step">
+                    <p id="summary-level-3"></p>
+                </div>
+            </div>
+            
+            <!-- 뉴스 목록 섹션 -->
+            <div class="news-section">
+                <h3 class="news-title">
+                    관련 뉴스 목록
+                    <img src="{% static 'svg/list-icon.svg' %}" alt="icon" class="littleicon">
+                </h3>
+            <div class="news-list-cont">
+                <div id="count" class="news-count">
+                    <span id="news-date"></span> 총 <span id="count" class="bold">0</span>건의 기사가 있습니다.
+                </div>
+                <div id="news-list" class="news-list space-y-4 p-2" style="height: 510px; overflow-y: auto;"></div>
             </div>
         </div>
     </section>
+    {% endblock %}
 
-    <!-- 3단계 요약 섹션 -->
-    <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="summary-section">
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4"></h3>
-            <div id="summary-level-1" class="prose"></div>
-        </div>
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4"></h3>
-            <div id="summary-level-2" class="prose"></div>
-        </div>
-        <div class="bg-white rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4"></h3>
-            <div id="summary-level-3" class="prose"></div>
-        </div>
-    </section>
-
-    <!-- 뉴스 목록 섹션 -->
-    <section class="bg-white rounded-lg shadow-sm">
-        <div class="news-header flex justify-between items-center p-6 border-b">
-            <h2 class="text-xl font-medium text-gray-900">관련 뉴스</h2>
-            <div id="news-count" class="text-sm text-gray-500"></div>
-        </div>
-        <div id="news-list" class="news-list space-y-4 p-6" style="height: 500px; overflow-y: auto;">
-        </div>
-    </section>
-</main>
-
-<style>
-    .chartjs-tooltip {
-        z-index: 1000;
-        background: white;
-        border-radius: 0.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        pointer-events: none;
-    }
-
-    input[type="date"] {
-        min-width: 130px;
-    }
-
-    .chart-container {
-        position: relative;
-        width: 100%;
-    }
-
-    .popup {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.5); /* 어두운 배경 */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        overflow-y: auto; /* 전체 팝업의 스크롤 활성화 */
-    }
-
-    .popup-content {
-        background-color: white;
-        max-width: 800px; /* 고정된 가로 크기 */
-        width: 90%; /* 작은 화면에서도 적응 가능 */
-        max-height: 80vh; /* 화면 높이의 최대 크기 */
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        overflow-y: auto; /* 컨텐츠 스크롤 가능 */
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        transition: max-height 0.3s ease; /* 크기 변화 애니메이션 */
-    }
-
-    .article-title {
-        font-size: 32px !important;
-        font-weight: bold !important;
-        margin-top: 60px !important;
-        margin-bottom: 10px !important;
-        color: #333 !important;
-        text-align: left !important; /* 왼쪽 정렬 */
-        word-wrap: break-word;
-        word-break: break-word;
-    }
-
-    .press-info {
-        font-size: 15px !important;
-        color: #777 !important;
-        margin-bottom: 20px !important;
-        text-align: left !important; /* 왼쪽 정렬 */
-    }
-
-    .article-image {
-        max-width: 100% !important;
-        padding: 0 20px !important; /* 양쪽에 10px(약 1cm) 여백 추가 */
-        height: auto !important;
-        display: block !important;
-        margin: 0 auto 30px !important;
-        border-radius: 4px !important;
-    }   
-
-    .article-content {
-        font-size: 16px !important;
-        line-height: 2.0 !important;
-        color: #333 !important;
-        text-align: justify !important;
-        padding: 0 20px !important; /* 양쪽에 10px(약 1cm) 여백 추가 */
-        margin-bottom: 20px !important;
-        margin-top: 30px !important;
-    }
-
-    .article-content p {
-        margin-bottom: 20px;
-    }
-
-    .original-link {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        color: #2563eb;
-        font-size: 14px;
-        text-decoration: none;
-        z-index: 10;
-    }
-
-    .original-link:hover {
-        text-decoration: underline;
-    }
-
-    .close-button {
-        position: absolute !important;
-        bottom: 20px !important;
-        right: 20px !important;
-        background-color: #d9534f !important;
-        color: white !important;
-        border: none !important;
-        padding: 10px 20px !important;
-        font-size: 14px !important;
-        border-radius: 4px !important;
-        cursor: pointer !important;
-        align-self: flex-end !important;
-        margin-top: 20px !important;
-        position: static !important;
-    }
-</style>
-{% endblock %}
-
-{% block extra_scripts %}
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- 초기 데이터 설정 -->
-<script>
-    const searchQuery = "{{ query|escapejs }}";
-    console.log('Search query:', searchQuery);
-</script>
-
-<!-- 핸들러 스크립트 로드 -->
-<script src="{% static 'js/news-list-handler.js' %}"></script>
-<script src="{% static 'js/chart-handler.js' %}"></script>
-<script src="{% static 'js/summary-handler.js' %}"></script>
-<script src="{% static 'js/quick-summary-handler.js' %}"></script>
- 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
+    {% block extra_scripts %}
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- 초기 데이터 설정 -->
+    <script>
         const searchQuery = "{{ query|escapejs }}";
-        if (searchQuery) {
-            const newsListHandler = new NewsListHandler(); 
-            newsListHandler.fetchNews();
-        }
-
-        const existingChart = Chart.getChart('timeline-chart');
-        if (existingChart) {
-            existingChart.destroy();
-        }
-
-        if (searchQuery) {
-            // 차트 핸들러 초기화
-            window.issuePulseChart = new IssuePulseChart();
-            window.newsListHandler = new NewsListHandler(); 
-            window.summaryHandler = new SummaryHandler();
-        }
-        
-        // 새로운 차트 초기화
-        // chart-handler.js에 정의한 IssuePulseChart
-        const issuePulseChart = new IssuePulseChart();
-        // console.log(issuePulseChart)
-    });
-</script>
-{% endblock %}
+        console.log('Search query:', searchQuery);
+    </script>
+    
+    <!-- 핸들러 스크립트 로드 -->
+    <script src="{% static 'js/news-list-handler.js' %}"></script>
+    <script src="{% static 'js/chart-handler.js' %}"></script>
+    <script src="{% static 'js/summary-handler.js' %}"></script>
+    <script src="{% static 'js/quick-summary-handler.js' %}"></script>
+     
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchQuery = "{{ query|escapejs }}";
+            if (searchQuery) {
+                const newsListHandler = new NewsListHandler(); 
+                newsListHandler.fetchNews();
+            }
+    
+            const existingChart = Chart.getChart('timeline-chart');
+            if (existingChart) {
+                existingChart.destroy();
+            }
+    
+            if (searchQuery) {
+                // 차트 핸들러 초기화
+                window.issuePulseChart = new IssuePulseChart();
+                window.newsListHandler = new NewsListHandler(); 
+                window.summaryHandler = new SummaryHandler();
+            }
+            
+            // 새로운 차트 초기화
+            // chart-handler.js에 정의한 IssuePulseChart
+            const issuePulseChart = new IssuePulseChart();
+            // console.log(issuePulseChart)
+        });
+    </script>
+    {% endblock %}

@@ -1,7 +1,7 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
-from django.conf import settings
-from django.conf.urls.static import static
+
+
 
 app_name = 'web'
 
@@ -20,4 +20,7 @@ urlpatterns = [
     path('api/v2/news/hover-summary/<str:date>/', views.get_hover_summary, name='get_hover_summary'),
     path('api/news/<int:news_id>', views.news_detail_api, name='news_detail_api'),
     path('api/v2/news/quick-summary/', views.get_quick_summary_api, name='get_quick_summary_api'),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+]
+
+

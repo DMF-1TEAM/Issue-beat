@@ -1,0 +1,75 @@
+
+/* 기본 컨테이너 스타일 */
+.news-list-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f7f7f7;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+  }
+  
+  /* 헤더 스타일 */
+  .news-list-container h2 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  
+  .date-summary {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 20px;
+  }
+  
+  /* 뉴스 아이템 */
+  .news-item {
+    display: grid;
+    grid-template-columns: 1fr 100px 120px 30px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+    font-size: 0.9rem;
+  }
+  
+  .news-item:last-child {
+    border-bottom: none;
+  }
+  
+  /* 뉴스 제목 */
+  .news-title {
+    font-weight: bold;
+    color: #333;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  
+  /* 언론사 이름 */
+  .news-press {
+    text-align: center;
+    color: #666;
+    font-size: 0.85rem;
+  }
+  
+  /* 날짜 */
+  .news-date {
+    text-align: center;
+    color: #999;
+    font-size: 0.85rem;
+  }
+  
+  /* 링크 화살표 */
+  .news-link {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #3cb371;
+    cursor: pointer;
+  }
+  
+  .news-link:hover {
+    color: #2e8b57;
+  }
+  

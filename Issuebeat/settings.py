@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'rest_framework',
     "import_export",
     'corsheaders',
+    "debug_toolbar",
 ]
 
 MIDDLEWARE = [
@@ -64,6 +65,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
+
 ]
 
 ROOT_URLCONF = 'Issuebeat.urls'
@@ -99,7 +102,7 @@ DATABASES = {
     # }
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "beat",
+        "NAME": "issuebeat",
         "USER": os.getenv("DB_USERNAME"),
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": os.getenv("RDS_URL"),
@@ -228,3 +231,7 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# INTERNAL_IPS = [
+#     "127.0.0.1",
+# ]
