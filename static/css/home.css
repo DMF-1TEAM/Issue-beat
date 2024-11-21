@@ -2,7 +2,7 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: Arial, sans-serif;
+    font-family: 'Apple SD Gothic';
     background-color: #000;
     height: 100%; 
     overflow: hidden;
@@ -46,6 +46,7 @@ html, body {
 
 /* === 검색 폼 섹션 === */
 .search-wrapper {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -57,6 +58,7 @@ html, body {
     background-color: transparent; /* 배경색을 투명하게 */
     border: 1px solid #FFFFFF; /* 흰색 테두리 */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 그림자 */
+    z-index: 10; 
 }
 
 .search-input {

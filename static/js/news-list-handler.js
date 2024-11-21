@@ -1,7 +1,7 @@
 class NewsListHandler {
     constructor() {
         this.newsListContainer = document.getElementById('news-list');
-        this.newsCountElement = document.getElementById('news-count');
+        this.newsCountElement = document.getElementById('count');
         this.searchQuery = '';
         this.currentDate = null;
         this.startDate = null;
@@ -187,6 +187,7 @@ class NewsListHandler {
 
     updateNewsCount(count) {
         if (this.newsCountElement) {
+            // 총 건의 기사가 있습니다. 텍스트와 숫자 모두 업데이트
             this.newsCountElement.innerHTML = `<span id="news-date"></span> 총 <span class="bold">${count}</span>건의 기사가 있습니다.`;
         }
     }
@@ -257,7 +258,7 @@ class NewsListHandler {
             }
         });
     }
-    
+
     showPopup(data) {
         const popup = document.createElement('div');
         popup.className = 'popup';

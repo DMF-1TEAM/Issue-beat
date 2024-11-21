@@ -44,7 +44,7 @@ body, html {
     position: absolute;
     width: 20rem;
     top: 35%;
-    left: 30%;
+    left: 33%;
     opacity: 0;
     transition: opacity 1s ease-in-out;
 }
