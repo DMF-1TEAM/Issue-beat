@@ -7,7 +7,8 @@ app_name = 'web'
 
 urlpatterns = [
     # 웹 페이지 URL
-    path('', views.home, name='home'),
+    path('', views.splash, name='splash'),
+    path('home/', views.home, name='home'),
     path('search/', views.search_view, name='search'),
     # v2 뉴스 검색 관련 API
     path('api/v2/news/chart/', views.news_count_chart_api, name='news_count_chart_api'),
@@ -20,7 +21,4 @@ urlpatterns = [
     path('api/v2/news/hover-summary/<str:date>/', views.get_hover_summary, name='get_hover_summary'),
     path('api/news/<int:news_id>', views.news_detail_api, name='news_detail_api'),
     path('api/v2/news/quick-summary/', views.get_quick_summary_api, name='get_quick_summary_api'),
-
 ]
-
-
