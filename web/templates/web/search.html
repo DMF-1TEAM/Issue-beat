@@ -13,12 +13,12 @@
     <!-- 상단 네비게이션 -->
     <header class="bg-black z-50 flex items-center h-14">
         <div class="w-full flex items-center justify-between px-36">
-            <a href="{% url 'web:home' %}" class="flex items-center"> <!-- ml-4 추가 -->
-                <img src="{% static '../static/svg/logo.svg' %}" alt="이슈박동 로고" class="mr-2" style="width: 70px; height: 40px;">
+            <a href="{% url 'web:home' %}" class="flex items-center">
+                <img src="{% static '../static/svg/logo.svg' %}" alt="이슈박동 로고" class="relative ml-15" style="width: 70px; height: 40px;">
             </a>
 
             {% if request.path != '/' %}
-            <div class="relative mr-20"> 
+            <div class="relative mr-15"> 
                 <form action="{% url 'web:search' %}" method="GET" class="relative">
                     <input type="text"
                         name="query"
