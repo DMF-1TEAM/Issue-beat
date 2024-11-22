@@ -25,13 +25,16 @@ html, body {
 }
 
 .main-title {
-    font-size: 2rem;
-    font-weight: bold;
+    font-family: 'AppleSDGothicNeoEB00', sans-serif;
+    font-size: 2.5rem;
     padding-left: 10%;
+    padding-top : 1%;
+    padding-bottom : 1%;
+    line-height : 1.5;
 }
 
 .quick-summary {
-    font-size: 1rem;
+    font-size: 1.2rem;
     max-width: 60%;
     padding-right: 10%;
 }
@@ -56,6 +59,7 @@ html, body {
     font-size: 1.8rem;
     font-weight: bold;
     gap: 0.5rem;
+    padding-top : 0.5%;
     padding-left: 10%;
 }
 
@@ -75,6 +79,8 @@ html, body {
     align-items: center;
     width: 100%;
     height: 1%;
+    padding-top: 0.3%;
+    padding-bottom: 0.3%;
     padding-left: 10%;
     padding-right: 10%;
 }
@@ -112,6 +118,7 @@ html, body {
 .chart-content {
     width: 100%;
     height: 20rem;
+    padding-top : 0.5%;
     padding-left: 10%;
     padding-right: 10%;
 }
@@ -129,13 +136,14 @@ html, body {
 
 /* 아이콘과 제목을 같은 줄에 배치 */
 .contents-title {
+    font-family: 'AppleSDGothicNeoB00', sans-serif;
     display: flex;
     align-items: center; /* 수직 가운데 정렬 */
     font-size: 1.8rem;
-    font-weight: bold;
     color: #333;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     gap: 0.5rem;
+    padding-top : 1%;
     padding-left: 10%;
     padding-right: 10%;
 }
@@ -153,6 +161,7 @@ html, body {
     flex-direction: row;
     gap: 2rem;
     width: 100%;
+    align-items: stretch; 
 }
 
 /* 요약 섹션 */
@@ -165,16 +174,16 @@ html, body {
 }
 
 .summary-title {
+    font-family: 'AppleSDGothicNeoB00', sans-serif;
     display: flex;
     align-items: center; /* 아이콘과 텍스트를 수평으로 배치 */
     font-size: 1.5rem;
-    font-weight: bold;
     color: #333;
 }
 
 .summary-title .littleicon {
-    width: 18px;
-    height: 18px;
+    width: 30px;
+    height: 30px;
     margin-left: 8px;
 }
 
@@ -185,18 +194,26 @@ html, body {
     color: #FFFFFF;
     line-height: 1.5;
     align-items: center;
+    align-items: center;
+    flex-grow: 1; /* 높이를 뉴스 목록과 동일하게 만듦 */
+    margin-bottom: 1rem; 
 }
 
 .summary-card p {
     margin-top: 0.5rem;
     font-size: 1.1rem;
     margin-left: 2%;
+    margin-right: 2%;
+    margin-bottom: 2%;
+    margin-top: 2%;
 }
 
 .summary-step {
     width: 80px;
     height: auto;
     margin-left: 1.4%;
+    margin-bottom: 2.2%;
+    margin-top: 2%;
 }
 
 /* 뉴스 목록 섹션 */
@@ -211,7 +228,7 @@ html, body {
 .news-list-cont {
     background-color: #FFFFFF; /* 흰색 배경 */
     border-radius: 10px; /* 경계선 둥글게 */
-    padding: 1rem;
+    padding: 1.5rem;
     padding-left: 1.5rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 살짝 그림자 추가 */
     overflow: hidden; /* 부모 요소에서 자식 요소 정리 */
@@ -219,6 +236,7 @@ html, body {
 }
 
 .news-title {
+    font-family: 'AppleSDGothicNeoM00', sans-serif;
     display: flex;
     align-items: center; /* 아이콘과 텍스트를 수평으로 배치 */
     font-size: 1.5rem;
@@ -250,6 +268,26 @@ html, body {
     pointer-events: none;
 }
 
+/* date_filter 스타일 추가 */
+.input-date {
+    height: 37px; /* 원하는 높이 */
+    width: 200px; /* 입력 필드 너비 */
+    padding: 10px;
+    font-size: 14.4px;
+    border: 0.5px solid #444;
+    border-radius: 5px;
+    box-sizing: border-box;
+    -webkit-appearance: none; /* 브라우저 기본 스타일 제거 */
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* 달력 아이콘  */
+.input-date::-webkit-calendar-picker-indicator {
+    filter: invert(100%) brightness(100%);
+    cursor: pointer; /* 포인터 변경 */
+}
+
 input[type="date"] {
     min-width: 130px;
 }
@@ -257,6 +295,7 @@ input[type="date"] {
 .chart-container {
     position: relative;
     width: 100%;
+    padding-top:2%;
 }
 
 .popup {
